@@ -8,6 +8,7 @@ static void create_tiles();
 static void start_game(Game *game, int row, int col);
 static void reveal_tile(Game *game, int row, int col);
 static void reveal_bombs(Game *game, int row, int col);
+static void reveal_number(Game *game, int row, int col);
 
 static void init_assets();
 
@@ -92,9 +93,13 @@ static void handle_input(SDL_Event event, Game *game) {
 
             if (game->start) start_game(game, row, col);
 
+            if (game->state[row][col] == FLAGGED) {
+                return;
+            }
+
             if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH) {
-                game->state[row][col] = REVEALED;
-                reveal_tile(game, row, col);
+                if (game->state[row][col] == HIDDEN) reveal_tile(game, row, col);
+                else if (game->grid[row][col] >= 1 && game->grid[row][col] <= 8) reveal_number(game, row, col);
             }
         } else if (event.button.button == SDL_BUTTON_RIGHT) {
             int x, y;
@@ -136,9 +141,10 @@ static void init_assets() {
     get_tile_as_texture("hovered", tilemap, 2, 1);
     get_tile_as_texture("revealed", tilemap, 2, 2);
     get_tile_as_texture("wrong", tilemap, 2, 3);
-    get_tile_as_texture("background", tilemap, 2, 4);
+    get_tile_as_texture("bad_flag", tilemap, 2, 4);
+    get_tile_as_texture("background", tilemap, 3, 4);
 
-    // From 8 - 14
+    // From 9 - 15
     get_tile_as_texture("1", tilemap, 0, 2);
     get_tile_as_texture("2", tilemap, 0, 3);
     get_tile_as_texture("3", tilemap, 0, 4);
@@ -213,7 +219,6 @@ static void gen_numbers(Uint8 grid[HEIGHT][WIDTH]) {
                     }
                 }
             }
-
             grid[row][col] = count;
         }
     }
@@ -257,6 +262,7 @@ static void start_game(Game *game, int row, int col) {
  * \param col The column of the tile to reveal
  */
 static void reveal_tile(Game *game, int row, int col) {
+    game->state[row][col] = REVEALED;
     char name[6];
     sprintf(name, "%d_%d", row, col);
     Object *obj = get_object_by_name(name);
@@ -265,7 +271,7 @@ static void reveal_tile(Game *game, int row, int col) {
         reveal_bombs(game, row, col);
         game->game_over = true;
     } else {
-        change_object_texture(obj, get_texture_by_id(game->grid[row][col] + 7));
+        change_object_texture(obj, get_texture_by_id(game->grid[row][col] + NUMBER_TILE_OFFSET));
         if (game->grid[row][col] == 0) {
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
@@ -292,14 +298,53 @@ static void reveal_bombs(Game *game, int row, int col) {
             if (row_ == row && col_ == col) {
                 continue;
             }
-            if (game->state[row_][col_] == REVEALED || game->state[row_][col_] == FLAGGED) {
+            if (game->state[row_][col_] == REVEALED) {
                 continue;
             }
-            if (game->grid[row_][col_] == 9) {
+            if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
+                char name[6];
+                sprintf(name, "%d_%d", row_, col_);
+                Object *obj = get_object_by_name(name);
+                change_object_texture(obj, get_texture_by_name("bad_flag"));
+            }else if (game->grid[row_][col_] == 9) {
                 char name[6];
                 sprintf(name, "%d_%d", row_, col_);
                 Object *obj = get_object_by_name(name);
                 change_object_texture(obj, get_texture_by_name("mine"));
+            }
+        }
+    }
+}
+
+/**
+ * Reveals around the number tile if all flags are placed
+ * \param game The game to reveal the number in
+ * \param row The row of the number tile
+ * \param col The column of the number tile
+ */
+static void reveal_number(Game *game, int row, int col) {
+    int n = game->grid[row][col];
+    int flag_count = 0;
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+                continue;
+            }
+            if (game->state[row+i][col+j] == FLAGGED) {
+                flag_count++;
+            }
+        }
+    }
+    if (flag_count != n) {
+        return;
+    }
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+                continue;
+            }
+            if (game->state[row+i][col+j] == HIDDEN) {
+                reveal_tile(game, row+i, col+j);
             }
         }
     }

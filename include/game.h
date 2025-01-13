@@ -7,12 +7,13 @@
 #define HEIGHT 20
 
 #define SQUARE_SIZE 30
-#define SQUARE_MARGIN 3
-
-#define MINES 50
 
 #define WIN_W WIDTH * SQUARE_SIZE
 #define WIN_H HEIGHT * SQUARE_SIZE
+
+#define NUMBER_TILE_OFFSET 8
+
+#define MINES 50
 
 enum _state {
     HIDDEN = 0,
