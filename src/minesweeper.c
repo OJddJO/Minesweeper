@@ -1,9 +1,13 @@
 #include "game.h"
 
+static void init_game(Game *game);
 static void init_grid(Uint8 grid[HEIGHT][WIDTH]);
 static void gen_mines(Uint8 grid[HEIGHT][WIDTH]);
 static void gen_numbers(Uint8 grid[HEIGHT][WIDTH]);
 static void create_tiles();
+static void start_game(Game *game, int row, int col);
+static void reveal_tile(Game *game, int row, int col);
+static void reveal_bombs(Game *game, int row, int col);
 
 static void init_assets();
 
@@ -18,19 +22,14 @@ int main(int argc, char *argv[]) {
     engine_init("Minesweeper", WIN_W, WIN_H, 60);
     set_manual_update(true);
     set_background_color((SDL_Color){191, 191, 191, 255});
+    set_window_icon("assets/icon.png");
+
+    srand(time(NULL));
 
     init_assets();
 
     Game *game = (Game *)malloc(sizeof(Game));
-    init_grid(game->grid);
-    gen_mines(game->grid);
-    gen_numbers(game->grid);
-
-    init_grid(game->revealed);
-    game->score = 0;
-    game->game_over = false;
-
-    create_tiles();
+    init_game(game);
 
     // for (int row = 0; row < HEIGHT; row++) {
     //     for (int col = 0; col < WIDTH; col++) {
@@ -51,6 +50,13 @@ int main(int argc, char *argv[]) {
  * \param game The game to update
  */
 static void update(Game *game) {
+    for (int row = 0; row < HEIGHT; row++) {
+        for (int col = 0; col < WIDTH; col++) {
+            char name[6];
+            sprintf(name, "%d_%d", row, col);
+            Object *obj = get_object_by_name(name);
+        }
+    }
 }
 
 /**
@@ -73,6 +79,48 @@ static void draw(Game *game) {
  * \param game The game to handle the input for
  */
 static void handle_input(SDL_Event event, Game *game) {
+    if (event.type == SDL_MOUSEBUTTONDOWN) {
+        if (game->game_over) {
+            init_game(game);
+            manual_update();
+            return;
+        } else if (event.button.button == SDL_BUTTON_LEFT) {
+            int x, y;
+            get_mouse_position(&x, &y);
+            int row = y / SQUARE_SIZE;
+            int col = x / SQUARE_SIZE;
+
+            if (game->start) start_game(game, row, col);
+
+            if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH) {
+                game->state[row][col] = REVEALED;
+                reveal_tile(game, row, col);
+            }
+        } else if (event.button.button == SDL_BUTTON_RIGHT) {
+            int x, y;
+            get_mouse_position(&x, &y);
+            int row = y / SQUARE_SIZE;
+            int col = x / SQUARE_SIZE;
+            if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH) {
+                if (game->state[row][col] == HIDDEN) {
+                    game->state[row][col] = FLAGGED;
+
+                    char name[6];
+                    sprintf(name, "%d_%d", row, col);
+                    Object *obj = get_object_by_name(name);
+                    change_object_texture(obj, get_texture_by_name("flag"));
+                } else if (game->state[row][col] == FLAGGED) {
+                    game->state[row][col] = HIDDEN;
+
+                    char name[6];
+                    sprintf(name, "%d_%d", row, col);
+                    Object *obj = get_object_by_name(name);
+                    change_object_texture(obj, get_texture_by_name("hidden"));
+                }
+            }
+        }
+        manual_update();
+    }
 }
 
 /**
@@ -99,6 +147,20 @@ static void init_assets() {
     get_tile_as_texture("6", tilemap, 1, 2);
     get_tile_as_texture("7", tilemap, 1, 3);
     get_tile_as_texture("8", tilemap, 1, 4);
+}
+
+/**
+ * Initializes the game structure
+ * \param game The game to initialize
+ */
+static void init_game(Game *game) {
+    init_grid(game->state);
+    game->score = 0;
+    game->start = true;
+    game->game_over = false;
+
+    destroy_all_objects();
+    create_tiles();
 }
 
 /**
@@ -166,6 +228,79 @@ static void create_tiles() {
             char name[6];
             sprintf(name, "%d_%d", row, col);
             create_object(name, get_texture_by_name("hidden"), col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, true, NULL);
+        }
+    }
+}
+
+/**
+ * Starts the game
+ * \param game The game to start
+ */
+static void start_game(Game *game, int row, int col) {
+    init_grid(game->grid);
+    gen_mines(game->grid);
+    gen_numbers(game->grid);
+
+    while (game->grid[row][col] != 0) {
+        init_grid(game->grid);
+        gen_mines(game->grid);
+        gen_numbers(game->grid);
+    }
+
+    game->start = false;
+}
+
+/**
+ * Reveals a tile
+ * \param game The game to reveal the tile in
+ * \param row The row of the tile to reveal
+ * \param col The column of the tile to reveal
+ */
+static void reveal_tile(Game *game, int row, int col) {
+    char name[6];
+    sprintf(name, "%d_%d", row, col);
+    Object *obj = get_object_by_name(name);
+    if (game->grid[row][col] == 9) {
+        change_object_texture(obj, get_texture_by_name("wrong"));
+        reveal_bombs(game, row, col);
+        game->game_over = true;
+    } else {
+        change_object_texture(obj, get_texture_by_id(game->grid[row][col] + 7));
+        if (game->grid[row][col] == 0) {
+            for (int i = -1; i < 2; i++) {
+                for (int j = -1; j < 2; j++) {
+                    if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+                        continue;
+                    }
+                    if (game->state[row+i][col+j] == HIDDEN) {
+                        game->state[row+i][col+j] = REVEALED;
+                        reveal_tile(game, row+i, col+j);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Reveals all bombs
+ * \param game The game to reveal the bombs in
+ */
+static void reveal_bombs(Game *game, int row, int col) {
+    for (int row_ = 0; row_ < HEIGHT; row_++) {
+        for (int col_ = 0; col_ < WIDTH; col_++) {
+            if (row_ == row && col_ == col) {
+                continue;
+            }
+            if (game->state[row_][col_] == REVEALED || game->state[row_][col_] == FLAGGED) {
+                continue;
+            }
+            if (game->grid[row_][col_] == 9) {
+                char name[6];
+                sprintf(name, "%d_%d", row_, col_);
+                Object *obj = get_object_by_name(name);
+                change_object_texture(obj, get_texture_by_name("mine"));
+            }
         }
     }
 }
