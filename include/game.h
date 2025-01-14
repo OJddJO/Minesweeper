@@ -3,8 +3,8 @@
 
 #include "engine.h"
 
-#define WIDTH 15
-#define HEIGHT 20
+#define WIDTH 20
+#define HEIGHT 25
 
 #define SQUARE_SIZE 30
 
@@ -13,7 +13,7 @@
 
 #define NUMBER_TILE_OFFSET 8
 
-#define MINES 50
+#define MINES WIDTH*HEIGHT/5
 
 enum _state {
     HIDDEN = 0,
@@ -27,6 +27,7 @@ typedef struct _Game {
     Uint32 score;
     bool start;
     bool game_over;
+    int x, y; // Mouse position for dragging
 } Game;
 
 #endif

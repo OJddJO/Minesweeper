@@ -12,9 +12,9 @@ static void reveal_number(Game *game, int row, int col);
 
 static void init_assets();
 
-static void update(Game *game);
 static void draw(Game *game);
 static void handle_input(SDL_Event event, Game *game);
+static void update(Game *game);
 
 /**
  * Main function
@@ -49,20 +49,6 @@ int main(int argc, char *argv[]) {
 }
 
 /**
- * Updates the game
- * \param game The game to update
- */
-static void update(Game *game) {
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
-            char name[6];
-            sprintf(name, "%d_%d", row, col);
-            Object *obj = get_object_by_name(name);
-        }
-    }
-}
-
-/**
  * Draws the game
  * \param game The game to draw
  */
@@ -77,6 +63,14 @@ static void draw(Game *game) {
 }
 
 /**
+ * Updates the game
+ * \param game The game to update
+ */
+static void update(Game *game) {
+    get_mouse_position(&game->x, &game->y);
+}
+
+/**
  * Handles input
  * \param event The event to handle
  * \param game The game to handle the input for
@@ -87,12 +81,12 @@ static void handle_input(SDL_Event event, Game *game) {
             init_game(game);
             manual_update();
             return;
-        } else if (event.button.button == SDL_BUTTON_LEFT) {
-            int x, y;
-            get_mouse_position(&x, &y);
-            int row = y / SQUARE_SIZE;
-            int col = x / SQUARE_SIZE;
-
+        }
+        int x, y;
+        get_mouse_position(&x, &y);
+        int row = y / SQUARE_SIZE;
+        int col = x / SQUARE_SIZE;
+        if (event.button.button == SDL_BUTTON_LEFT) {
             if (game->start) start_game(game, row, col);
 
             if (game->state[row][col] == FLAGGED) {
@@ -104,25 +98,35 @@ static void handle_input(SDL_Event event, Game *game) {
                 else if (game->grid[row][col] >= 1 && game->grid[row][col] <= 8) reveal_number(game, row, col);
             }
         } else if (event.button.button == SDL_BUTTON_RIGHT) {
-            int x, y;
-            get_mouse_position(&x, &y);
-            int row = y / SQUARE_SIZE;
-            int col = x / SQUARE_SIZE;
             if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH) {
+                char name[6];
+                sprintf(name, "%d_%d", row, col);
+                Object *obj = get_object_by_name(name);
                 if (game->state[row][col] == HIDDEN) {
                     game->state[row][col] = FLAGGED;
-
-                    char name[6];
-                    sprintf(name, "%d_%d", row, col);
-                    Object *obj = get_object_by_name(name);
                     change_object_texture(obj, get_texture_by_name("flag"));
                 } else if (game->state[row][col] == FLAGGED) {
                     game->state[row][col] = HIDDEN;
-
-                    char name[6];
-                    sprintf(name, "%d_%d", row, col);
-                    Object *obj = get_object_by_name(name);
                     change_object_texture(obj, get_texture_by_name("hidden"));
+                }
+            }
+        }
+        manual_update();
+    } else if (event.type == SDL_KEYDOWN) {
+        if (event.key.keysym.sym == SDLK_SPACE) {
+            int dx, dy;
+            get_mouse_position(&dx, &dy);
+            dx -= game->x;
+            dy -= game->y;
+            if (dx != 0 || dy != 0) {
+                for (int row = 0; row < HEIGHT; row++) {
+                    for (int col = 0; col < WIDTH; col++) {
+                        char name[6];
+                        sprintf(name, "%d_%d", row, col);
+                        Object *obj = get_object_by_name(name);
+                        obj->x += dx;
+                        obj->y += dy;
+                    }
                 }
             }
         }
@@ -302,7 +306,9 @@ static void reveal_bombs(Game *game, int row, int col) {
             if ((row_ == row && col_ == col) || game->state[row_][col_] == REVEALED) {
                 continue;
             }
-            if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
+            if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] == 9) {
+                continue;
+            } else if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
                 change_object_texture(obj, get_texture_by_name("bad_flag"));
             } else if (game->grid[row_][col_] == 9) {
                 change_object_texture(obj, get_texture_by_name("mine"));

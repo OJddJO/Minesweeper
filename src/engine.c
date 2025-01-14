@@ -112,7 +112,7 @@ void engine_quit() {
  * \param update The update function. Should take a `Game *` as argument and return `void`
  * \param draw The draw function. Should takes a `Game *` as argument and returns `void`.
  * \param event_handler The event handler function. Should takes a `SDL_Event` and a `Game *` as arguments and returns `void`.
- * \param data The game data to pass to the functions (update, draw, event_handler)
+ * \param data The `Game *` to pass to the functions (update, draw, event_handler)
  * \warning The engine runs in an infinite loop until the window is closed
  * \note The order of execution is as follows: Event handling, Update, (Clear screen), Draw
  */
@@ -363,9 +363,36 @@ void draw_texture_from_path(char *filename, int x, int y, int width, int height)
 
 /**
  * Destroys a texture
+ * \param id The id of the texture
+ */
+void destroy_texture(Uint32 id) {
+    _assert_engine_init();
+    TextureList *current = _texture_list;
+    TextureList *prev = NULL;
+    while (current != NULL) {
+        if (current->id == id) {
+            if (prev == NULL) {
+                _texture_list = current->next;
+            } else {
+                prev->next = current->next;
+            }
+            SDL_DestroyTexture(current->texture);
+            free(current->name);
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+    fprintf(stderr, "[ENGINE] Texture not found: %d\n", id);
+    exit(1);
+}
+
+/**
+ * Destroys a texture
  * \param name The name of the texture
  */
-void destroy_texture(char *name) {
+void destroy_texture_by_name(char *name) {
     _assert_engine_init();
     TextureList *current = _texture_list;
     TextureList *prev = NULL;
@@ -666,7 +693,7 @@ Uint32 instantiate_object(ObjectTemplate *object_template, char *name, int x, in
  * \param id The id of the object
  * \return True if the object exists, false otherwise
  */
-bool object_exists_by_id(int id) {
+bool object_exists(Uint32 id) {
     _assert_engine_init();
     ObjectList *current = _object_list;
     while (current != NULL) {
@@ -720,7 +747,7 @@ void change_object_texture(Object *object, Texture *texture) {
  * \param id The id of the object
  * \return The object
  */
-Object *get_object_by_id(int id) {
+Object *get_object(Uint32 id) {
     _assert_engine_init();
     ObjectList *current = _object_list;
     while (current != NULL) {
@@ -748,6 +775,33 @@ Object *get_object_by_name(char *name) {
         current = current->next;
     }
     fprintf(stderr, "[ENGINE] Object not found: %s\n", name);
+    exit(1);
+}
+
+/**
+ * Destroys an object by id
+ * \param id The id of the object
+ */
+void destroy_object(Uint32 id) {
+    _assert_engine_init();
+    ObjectList *current = _object_list;
+    ObjectList *prev = NULL;
+    while (current != NULL) {
+        if (current->id == id) {
+            if (prev == NULL) {
+                _object_list = current->next;
+            } else {
+                prev->next = current->next;
+            }
+            free(current->object);
+            free(current->name);
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+    fprintf(stderr, "[ENGINE] Object not found: %d\n", id);
     exit(1);
 }
 
@@ -867,7 +921,7 @@ Uint32 create_object_template(char *name, Texture *texture, int width, int heigh
  * \param id The id of the object template
  * \return The object template
  */
-ObjectTemplate *get_template_by_id(int id) {
+ObjectTemplate *get_template(Uint32 id) {
     _assert_engine_init();
     ObjectTemplateList *current = _object_template_list;
     while (current != NULL) {
@@ -899,10 +953,37 @@ ObjectTemplate *get_template_by_name(char *name) {
 }
 
 /**
+ * Destroys an object template by id
+ * \param id The id of the object template
+ */
+void destroy_object_template(Uint32 id) {
+    _assert_engine_init();
+    ObjectTemplateList *current = _object_template_list;
+    ObjectTemplateList *prev = NULL;
+    while (current != NULL) {
+        if (current->id == id) {
+            if (prev == NULL) {
+                _object_template_list = current->next;
+            } else {
+                prev->next = current->next;
+            }
+            free(current->object_template);
+            free(current->name);
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+    fprintf(stderr, "[ENGINE] Object template not found: %d\n", id);
+    exit(1);
+}
+
+/**
  * Destroys an object template by name
  * \param name The name of the object template
  */
-void destroy_object_template(char *name) {
+void destroy_object_template_by_name(char *name) {
     _assert_engine_init();
     ObjectTemplateList *current = _object_template_list;
     ObjectTemplateList *prev = NULL;
@@ -1402,10 +1483,13 @@ bool object_is_hovered(Object *object) {
  */
 bool object_is_hovered_by_name(char *name) {
     _assert_engine_init();
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
     ObjectList *current = _object_list;
     while (current != NULL) {
         if (strcmp(current->name, name) == 0) {
-            return object_is_hovered(current->object);
+            Object *object = current->object;
+            return mouseX >= object->x && mouseX <= object->x + object->width && mouseY >= object->y && mouseY <= object->y + object->height;
         }
         current = current->next;
     }
@@ -1414,10 +1498,42 @@ bool object_is_hovered_by_name(char *name) {
 
 /**
  * Get the list of the objects that are hovered
- * \param objects The list where the objects will be stored
+ * \param objects The array to store the hovered objects
+ * \param size The size of the array
  */
-void get_hovered_objects(List *objects) {
-    
+void get_hovered_objects(Object *objects[], int size) {
+    _assert_engine_init();
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    ObjectList *current = _object_list;
+    int i = 0;
+    while (current != NULL && i < size) {
+        Object *object = current->object;
+        if (mouseX >= object->x && mouseX <= object->x + object->width && mouseY >= object->y && mouseY <= object->y + object->height) {
+            objects[i++] = current->object;
+        }
+        current = current->next;
+    }
+}
+
+/**
+ * Get the list of the objects that are hovered
+ * \param ids The array to store the hovered objects ids
+ * \param size The size of the array
+ */
+void get_hovered_objects_ids(Uint32 ids[], int size) {
+    _assert_engine_init();
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    ObjectList *current = _object_list;
+    int i = 0;
+    while (current != NULL && i < size) {
+        Object *object = current->object;
+        if (mouseX >= object->x && mouseX <= object->x + object->width && mouseY >= object->y && mouseY <= object->y + object->height) {
+            ids[i++] = current->id;
+        }
+        current = current->next;
+    }
 }
 
 /***********************************************
@@ -1733,10 +1849,35 @@ void stop_audio(int channel) {
 }
 
 /**
+ * Closes an audio by id
+ * \param id The id of the audio
+ */
+void close_audio(Uint32 id) {
+    _assert_engine_init();
+    Audiolist *current = _audio_list;
+    Audiolist *prev = NULL;
+    while (current != NULL) {
+        if (current->id == id) {
+            if (prev == NULL) {
+                _audio_list = current->next;
+            } else {
+                prev->next = current->next;
+            }
+            Mix_FreeChunk(current->audio);
+            free(current->name);
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+}
+
+/**
  * Closes an audio by name
  * \param name The name of the audio
  */
-void close_audio(char *name) {
+void close_audio_by_name(char *name) {
     _assert_engine_init();
     Audiolist *current = _audio_list;
     Audiolist *prev = NULL;

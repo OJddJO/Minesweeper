@@ -198,18 +198,6 @@ typedef enum _Anchor {
     SE
 } Anchor;
 
-/**
- * List structure
- * \param data The data of the list item
- * \param next The next list item
- * \param prev The previous list item
- */
-typedef struct _List {
-    void *data;
-    struct _List *next;
-    struct _list *prev;
-} List;
-
 // Engine functions
 
 void engine_init(const char *title, int width, int height, int fps);
@@ -232,7 +220,8 @@ Texture *get_texture_by_name(char *name);
 void draw_texture(Texture *texture, int x, int y, int width, int height);
 void draw_texture_ex(Texture *texture, int x, int y, int width, int height, double angle, Point *center, Flip flip);
 void draw_texture_from_path(char *filename, int x, int y, int width, int height);
-void destroy_texture(char *name);
+void destroy_texture(Uint32 id);
+void destroy_texture_by_name(char *name);
 void destroy_all_textures();
 void rotate_texture(char *name, double angle); //need to be tested
 
@@ -251,21 +240,23 @@ void destroy_tilemap(Tilemap *tilemap);
 
 Uint32 create_object(char *name, Texture *texture, int x, int y, int width, int height, bool hitbox, void *data);
 Uint32 instantiate_object(ObjectTemplate *object_template, char *name, int x, int y, void *data);
-bool object_exists_by_id(int id);
+bool object_exists(Uint32 id);
 bool object_exists_by_name(char *name);
 void draw_object(Object *object);
 void change_object_texture(Object *object, Texture *texture);
-Object *get_object_by_id(int id);
+Object *get_object(Uint32 id);
 Object *get_object_by_name(char *name);
+void destroy_object(Uint32 id);
 void destroy_object_by_name(char *name);
 void destroy_all_objects();
 
 // Object template functions
 
 Uint32 create_object_template(char *name, Texture *texture, int width, int height, bool hitbox);
-ObjectTemplate *get_template_by_id(int id);
+ObjectTemplate *get_template(Uint32 id);
 ObjectTemplate *get_template_by_name(char *name);
-void destroy_object_template(char *name);
+void destroy_object_template(Uint32 id);
+void destroy_object_template_by_name(char *name);
 void destroy_all_templates();
 
 // Hitbox functions
@@ -306,7 +297,8 @@ void get_mouse_position(int *x, int *y);
 bool any_key_pressed();
 bool object_is_hovered(Object *object);
 bool object_is_hovered_by_name(char *name);
-void get_hovered_objects(List *objects);
+void get_hovered_objects(Object *objects[], int size);
+void get_hovered_objects_ids(Uint32 ids[], int size);
 
 // Text functions
 
@@ -324,7 +316,8 @@ void play_audio(Audio *audio, int channel);
 void play_audio_by_name(char *name, int channel);
 void pause_audio(int channel);
 void stop_audio(int channel);
-void close_audio(char *name);
+void close_audio(Uint32 id);
+void close_audio_by_name(char *name);
 void close_all_audios();
 
 #endif // __ENGINE_H__
