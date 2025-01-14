@@ -198,6 +198,17 @@ typedef enum _Anchor {
     SE
 } Anchor;
 
+/**
+ * List structure
+ * \param data The data of the list item
+ * \param next The next list item
+ * \param prev The previous list item
+ */
+typedef struct _List {
+    void *data;
+    struct _List *next;
+    struct _list *prev;
+} List;
 
 // Engine functions
 
@@ -295,6 +306,7 @@ void get_mouse_position(int *x, int *y);
 bool any_key_pressed();
 bool object_is_hovered(Object *object);
 bool object_is_hovered_by_name(char *name);
+void get_hovered_objects(List *objects);
 
 // Text functions
 

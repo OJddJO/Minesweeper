@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
 
     engine_run(update, draw, handle_input, game);
 
+    destroy_all_objects();
+    destroy_all_textures();
     engine_quit();
     free(game);
     return 0;
@@ -279,7 +281,6 @@ static void reveal_tile(Game *game, int row, int col) {
                         continue;
                     }
                     if (game->state[row+i][col+j] == HIDDEN) {
-                        game->state[row+i][col+j] = REVEALED;
                         reveal_tile(game, row+i, col+j);
                     }
                 }
@@ -295,21 +296,15 @@ static void reveal_tile(Game *game, int row, int col) {
 static void reveal_bombs(Game *game, int row, int col) {
     for (int row_ = 0; row_ < HEIGHT; row_++) {
         for (int col_ = 0; col_ < WIDTH; col_++) {
-            if (row_ == row && col_ == col) {
-                continue;
-            }
-            if (game->state[row_][col_] == REVEALED) {
+            char name[6];
+            sprintf(name, "%d_%d", row_, col_);
+            Object *obj = get_object_by_name(name);
+            if ((row_ == row && col_ == col) || game->state[row_][col_] == REVEALED) {
                 continue;
             }
             if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
-                char name[6];
-                sprintf(name, "%d_%d", row_, col_);
-                Object *obj = get_object_by_name(name);
                 change_object_texture(obj, get_texture_by_name("bad_flag"));
-            }else if (game->grid[row_][col_] == 9) {
-                char name[6];
-                sprintf(name, "%d_%d", row_, col_);
-                Object *obj = get_object_by_name(name);
+            } else if (game->grid[row_][col_] == 9) {
                 change_object_texture(obj, get_texture_by_name("mine"));
             }
         }

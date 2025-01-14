@@ -389,8 +389,7 @@ void destroy_texture(char *name) {
 }
 
 /**
- * Destroys a texture
- * \param texture The texture to destroy
+ * Destroys all texture
  */
 void destroy_all_textures() {
     _assert_engine_init();
@@ -1411,6 +1410,14 @@ bool object_is_hovered_by_name(char *name) {
         current = current->next;
     }
     return false;
+}
+
+/**
+ * Get the list of the objects that are hovered
+ * \param objects The list where the objects will be stored
+ */
+void get_hovered_objects(List *objects) {
+    
 }
 
 /***********************************************
