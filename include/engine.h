@@ -206,6 +206,7 @@ void engine_run(void (*update)(Game *), void (*draw)(Game *), void (*event_handl
 
 // Window functions
 
+void set_window_title(char *title);
 void set_window_icon(char *filename);
 void window_resizable(bool resizable);
 void window_fullscreen(bool fullscreen);
@@ -214,8 +215,8 @@ void manual_update();
 
 // Texture functions
 
-Uint32 create_texture(char *filename, char *name);
-Texture *get_texture_by_id(Uint32 id);
+Uint32 load_texture(char *filename, char *name);
+Texture *get_texture(Uint32 id);
 Texture *get_texture_by_name(char *name);
 void draw_texture(Texture *texture, int x, int y, int width, int height);
 void draw_texture_ex(Texture *texture, int x, int y, int width, int height, double angle, Point *center, Flip flip);
@@ -223,11 +224,10 @@ void draw_texture_from_path(char *filename, int x, int y, int width, int height)
 void destroy_texture(Uint32 id);
 void destroy_texture_by_name(char *name);
 void destroy_all_textures();
-void rotate_texture(char *name, double angle); //need to be tested
 
 // Tilemap functions
 
-Tilemap *create_tilemap(char *filename, int tile_width, int tile_height, int spacing, int nb_rows, int nb_cols);
+Tilemap *load_tilemap(char *filename, int tile_width, int tile_height, int spacing, int nb_rows, int nb_cols);
 Tile *get_tile(Tilemap *tilemap, int tile_row, int tile_col);
 Uint32 get_tile_as_texture(char *name, Tilemap *tilemap, int tile_row, int tile_col);
 void draw_tile(Tile *tile, int x, int y);
@@ -270,7 +270,6 @@ void draw_line(int x1, int y1, int x2, int y2, Color color);
 void draw_rect(int x1, int y1, int x2, int y2, Color color);
 void draw_circle(int x, int y, int radius, Color color);
 void draw_ellipse(int x, int y, int rx, int ry, Color color);
-
 void draw_line_thick(int x1, int y1, int x2, int y2, Color color, int thickness);
 void draw_rect_thick(int x1, int y1, int x2, int y2, Color color, int thickness);
 void draw_circle_thick(int x, int y, int radius, Color color, int thickness);
@@ -310,7 +309,7 @@ void close_all_fonts();
 // Audio functions
 
 Uint32 load_audio(char *filename, char *name);
-Audio *get_audio_by_id(Uint32 id);
+Audio *get_audio(Uint32 id);
 Audio *get_audio_by_name(char *name);
 void play_audio(Audio *audio, int channel);
 void play_audio_by_name(char *name, int channel);

@@ -155,6 +155,15 @@ void engine_run(void (*update)(Game *), void (*draw)(Game *), void (*event_handl
  ************************************************/
 
 /**
+ * Sets the window title
+ * \param title The title of the window
+ */
+void set_window_title(char *title) {
+    _assert_engine_init();
+    SDL_SetWindowTitle(_engine->window, title);
+}
+
+/**
  * Sets the window icon
  * \param filename The path to the icon
  */
@@ -260,7 +269,7 @@ static void _add_texture_to_list(Texture *texture, char *name) {
  * \return The texture id
  * \note The texture is stored internally and can be accessed by its name or its id
  */
-Uint32 create_texture(char *filename, char *name) {
+Uint32 load_texture(char *filename, char *name) {
     _assert_engine_init();
 
     // Load texture
@@ -281,7 +290,7 @@ Uint32 create_texture(char *filename, char *name) {
  * \param id The id of the texture
  * \return The texture
  */
-Texture *get_texture_by_id(Uint32 id) {
+Texture *get_texture(Uint32 id) {
     _assert_engine_init();
     TextureList *current = _texture_list;
     while (current != NULL) {
@@ -431,17 +440,6 @@ void destroy_all_textures() {
     _texture_list = NULL;
 }
 
-/**
- * Rotate a texture and draw it
- * \param name The name of the texture
- * \param angle The angle to rotate the texture
- */
-void rotate_texture(char *name, double angle) {
-    _assert_engine_init();
-    Texture *texture = get_texture_by_name(name);
-    SDL_RenderCopyEx(_engine->renderer, texture, NULL, NULL, angle, NULL, SDL_FLIP_NONE);
-}
-
 /***********************************************
  * Tilemap functions
  ***********************************************/
@@ -456,7 +454,7 @@ void rotate_texture(char *name, double angle) {
  * \param nb_cols The number of columns in the tilemap
  * \return The tilemap
  */
-Tilemap *create_tilemap(char *filename, int tile_width, int tile_height, int spacing, int nb_rows, int nb_cols) {
+Tilemap *load_tilemap(char *filename, int tile_width, int tile_height, int spacing, int nb_rows, int nb_cols) {
     _assert_engine_init();
     Tilemap *tilemap = (Tilemap *)malloc(sizeof(Tilemap));
     if (tilemap == NULL) {
@@ -1770,7 +1768,7 @@ Uint32 load_audio(char *filename, char *name) {
  * \param id The id of the audio
  * \return The audio
  */
-Audio *get_audio_by_id(Uint32 id) {
+Audio *get_audio(Uint32 id) {
     _assert_engine_init();
     Audiolist *current = _audio_list;
     while (current != NULL) {

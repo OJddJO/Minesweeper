@@ -11,7 +11,7 @@
 #define WIN_W WIDTH * SQUARE_SIZE
 #define WIN_H HEIGHT * SQUARE_SIZE
 
-#define NUMBER_TILE_OFFSET 8
+#define NUMBER_TILE_OFFSET 6
 
 #define MINES WIDTH*HEIGHT/5
 
@@ -19,6 +19,15 @@ enum _state {
     HIDDEN = 0,
     REVEALED,
     FLAGGED
+};
+
+enum _textures {
+    T_FLAG = 1,
+    T_MINE,
+    T_HIDDEN,
+    T_WRONG,
+    T_BADFLAG,
+    T_BACKGROUND,
 };
 
 typedef struct _Game {

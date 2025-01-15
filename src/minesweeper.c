@@ -9,6 +9,7 @@ static void start_game(Game *game, int row, int col);
 static void reveal_tile(Game *game, int row, int col);
 static void reveal_bombs(Game *game, int row, int col);
 static void reveal_number(Game *game, int row, int col);
+static void gen_chunk();
 
 static void init_assets();
 
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
 
     init_assets();
+    load_font("assets/font.ttf", 20, "font");
 
     Game *game = (Game *)malloc(sizeof(Game));
     init_game(game);
@@ -47,6 +49,7 @@ int main(int argc, char *argv[]) {
 
     destroy_all_objects();
     destroy_all_textures();
+    close_all_fonts();
     engine_quit();
     free(game);
     return 0;
@@ -64,6 +67,13 @@ static void draw(Game *game) {
             draw_object(get_object_by_name(name));
         }
     }
+    char score[31];
+    sprintf(score, "Score: %d", game->score);
+    draw_text("font", score, 11, WIN_H - 9, (SDL_Color){0, 0, 0, 255}, SW);
+    draw_text("font", score, 10, WIN_H - 10, (SDL_Color){255, 255, 255, 255}, SW);
+    char title[70];
+    sprintf(title, "Minesweeper - %s - %s", game->game_over ? "Game Over" : "Playing", score);
+    set_window_title(title);
 }
 
 /**
@@ -131,10 +141,10 @@ static void handle_input(SDL_Event event, Game *game) {
                         Object *obj = get_object_by_name(name);
                         if (game->state[row][col] == HIDDEN) {
                             game->state[row][col] = FLAGGED;
-                            change_object_texture(obj, get_texture_by_name("flag"));
+                            change_object_texture(obj, get_texture(T_FLAG));
                         } else if (game->state[row][col] == FLAGGED) {
                             game->state[row][col] = HIDDEN;
-                            change_object_texture(obj, get_texture_by_name("hidden"));
+                            change_object_texture(obj, get_texture(T_HIDDEN));
                         }
                         update = true;
                     }
@@ -159,19 +169,17 @@ static void handle_input(SDL_Event event, Game *game) {
  * Initializes the assets
  */
 static void init_assets() {
-    Tilemap *tilemap = create_tilemap("assets/tiles.png", 6, 6, 0, 5, 5);
+    Tilemap *tilemap = load_tilemap("assets/tiles.png", 6, 6, 0, 5, 5);
 
     // From 1 - 7
     get_tile_as_texture("flag", tilemap, 0, 0);
     get_tile_as_texture("mine", tilemap, 0, 1);
     get_tile_as_texture("hidden", tilemap, 2, 0);
-    get_tile_as_texture("hovered", tilemap, 2, 1);
-    get_tile_as_texture("revealed", tilemap, 2, 2);
     get_tile_as_texture("wrong", tilemap, 2, 3);
     get_tile_as_texture("bad_flag", tilemap, 2, 4);
     get_tile_as_texture("background", tilemap, 3, 4);
 
-    // From 9 - 15
+    // From 7 - 13
     get_tile_as_texture("1", tilemap, 0, 2);
     get_tile_as_texture("2", tilemap, 0, 3);
     get_tile_as_texture("3", tilemap, 0, 4);
@@ -264,7 +272,7 @@ static void create_tiles() {
         for (int col = 0; col < WIDTH; col++) {
             char name[6];
             sprintf(name, "%d_%d", row, col);
-            create_object(name, get_texture_by_id(3U), col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, true, NULL);
+            create_object(name, get_texture(T_HIDDEN), col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, true, NULL);
         }
     }
 }
@@ -295,16 +303,16 @@ static void start_game(Game *game, int row, int col) {
  */
 static void reveal_tile(Game *game, int row, int col) {
     game->state[row][col] = REVEALED;
-    game->score++;
     char name[6];
     sprintf(name, "%d_%d", row, col);
     Object *obj = get_object_by_name(name);
     if (game->grid[row][col] == 9) {
-        change_object_texture(obj, get_texture_by_name("wrong"));
+        change_object_texture(obj, get_texture(T_WRONG));
         reveal_bombs(game, row, col);
         game->game_over = true;
     } else {
-        change_object_texture(obj, get_texture_by_id(game->grid[row][col] + NUMBER_TILE_OFFSET));
+        game->score++;
+        change_object_texture(obj, get_texture(game->grid[row][col] + NUMBER_TILE_OFFSET));
         if (game->grid[row][col] == 0) {
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
@@ -318,7 +326,6 @@ static void reveal_tile(Game *game, int row, int col) {
             }
         }
     }
-    printf("Score: %d\n", game->score);
 }
 
 /**
@@ -337,9 +344,9 @@ static void reveal_bombs(Game *game, int row, int col) {
             if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] == 9) {
                 continue;
             } else if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
-                change_object_texture(obj, get_texture_by_name("bad_flag"));
+                change_object_texture(obj, get_texture(T_BADFLAG));
             } else if (game->grid[row_][col_] == 9) {
-                change_object_texture(obj, get_texture_by_name("mine"));
+                change_object_texture(obj, get_texture(T_MINE));
             }
         }
     }
