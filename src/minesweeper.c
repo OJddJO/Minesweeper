@@ -67,7 +67,25 @@ static void draw(Game *game) {
  * \param game The game to update
  */
 static void update(Game *game) {
-    get_mouse_position(&game->x, &game->y);
+    if (game->space_pressed) {
+        int dx, dy;
+        get_mouse_position(&dx, &dy);
+        dx -= game->mx;
+        dy -= game->my;
+        if (dx != 0 || dy != 0) {
+            for (int row = 0; row < HEIGHT; row++) {
+                for (int col = 0; col < WIDTH; col++) {
+                    char name[6];
+                    sprintf(name, "%d_%d", row, col);
+                    Object *obj = get_object_by_name(name);
+                    obj->x += dx;
+                    obj->y += dy;
+                }
+            }
+        }
+        manual_update();
+    }
+    get_mouse_position(&game->mx, &game->my);
 }
 
 /**
@@ -114,23 +132,12 @@ static void handle_input(SDL_Event event, Game *game) {
         manual_update();
     } else if (event.type == SDL_KEYDOWN) {
         if (event.key.keysym.sym == SDLK_SPACE) {
-            int dx, dy;
-            get_mouse_position(&dx, &dy);
-            dx -= game->x;
-            dy -= game->y;
-            if (dx != 0 || dy != 0) {
-                for (int row = 0; row < HEIGHT; row++) {
-                    for (int col = 0; col < WIDTH; col++) {
-                        char name[6];
-                        sprintf(name, "%d_%d", row, col);
-                        Object *obj = get_object_by_name(name);
-                        obj->x += dx;
-                        obj->y += dy;
-                    }
-                }
-            }
+            game->space_pressed = true;
         }
-        manual_update();
+    } else if (event.type == SDL_KEYUP) {
+        if (event.key.keysym.sym == SDLK_SPACE) {
+            game->space_pressed = false;
+        }
     }
 }
 
@@ -170,6 +177,7 @@ static void init_game(Game *game) {
     game->score = 0;
     game->start = true;
     game->game_over = false;
+    game->space_pressed = false;
 
     destroy_all_objects();
     create_tiles();

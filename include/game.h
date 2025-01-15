@@ -27,7 +27,8 @@ typedef struct _Game {
     Uint32 score;
     bool start;
     bool game_over;
-    int x, y; // Mouse position for dragging
+    int mx, my; // Mouse position for dragging
+    bool space_pressed;
 } Game;
 
 #endif
