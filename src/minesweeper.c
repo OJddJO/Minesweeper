@@ -16,6 +16,10 @@ static void draw(Game *game);
 static void handle_input(SDL_Event event, Game *game);
 static void update(Game *game);
 
+static inline bool in_grid(int row, int col) {
+    return row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH;
+}
+
 /**
  * Main function
  */
@@ -82,6 +86,8 @@ static void update(Game *game) {
                     obj->y += dy;
                 }
             }
+            game->vx += dx;
+            game->vy += dy;
         }
         manual_update();
     }
@@ -94,51 +100,61 @@ static void update(Game *game) {
  * \param game The game to handle the input for
  */
 static void handle_input(SDL_Event event, Game *game) {
-    if (event.type == SDL_MOUSEBUTTONDOWN) {
-        if (game->game_over) {
-            init_game(game);
-            manual_update();
-            return;
-        }
-        int x, y;
-        get_mouse_position(&x, &y);
-        int row = y / SQUARE_SIZE;
-        int col = x / SQUARE_SIZE;
-        if (event.button.button == SDL_BUTTON_LEFT) {
-            if (game->start) start_game(game, row, col);
+    bool update = false;
+    switch (event.type) {
+        case (SDL_MOUSEBUTTONDOWN):
+            if (game->game_over) {
+                init_game(game);
+                update = true;
+                break;
+            }
+            int x, y;
+            get_mouse_position(&x, &y);
+            int row = (y - game->vy) / SQUARE_SIZE;
+            int col = (x - game->vx) / SQUARE_SIZE;
+            switch (event.button.button) {
+                case (SDL_BUTTON_LEFT):
+                    if (game->start) start_game(game, row, col);
 
-            if (game->state[row][col] == FLAGGED) {
-                return;
-            }
+                    if (game->state[row][col] == FLAGGED) break;
 
-            if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH) {
-                if (game->state[row][col] == HIDDEN) reveal_tile(game, row, col);
-                else if (game->grid[row][col] >= 1 && game->grid[row][col] <= 8) reveal_number(game, row, col);
+                    if (in_grid(row, col)) {
+                        if (game->state[row][col] == HIDDEN) reveal_tile(game, row, col);
+                        else if (game->grid[row][col] >= 1 && game->grid[row][col] <= 8) {
+                            reveal_number(game, row, col);
+                        }
+                        update = true;
+                    }
+                    break;
+                case (SDL_BUTTON_RIGHT):
+                    if (in_grid(row, col)) {
+                        char name[6];
+                        sprintf(name, "%d_%d", row, col);
+                        Object *obj = get_object_by_name(name);
+                        if (game->state[row][col] == HIDDEN) {
+                            game->state[row][col] = FLAGGED;
+                            change_object_texture(obj, get_texture_by_name("flag"));
+                        } else if (game->state[row][col] == FLAGGED) {
+                            game->state[row][col] = HIDDEN;
+                            change_object_texture(obj, get_texture_by_name("hidden"));
+                        }
+                        update = true;
+                    }
+                    break;
             }
-        } else if (event.button.button == SDL_BUTTON_RIGHT) {
-            if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH) {
-                char name[6];
-                sprintf(name, "%d_%d", row, col);
-                Object *obj = get_object_by_name(name);
-                if (game->state[row][col] == HIDDEN) {
-                    game->state[row][col] = FLAGGED;
-                    change_object_texture(obj, get_texture_by_name("flag"));
-                } else if (game->state[row][col] == FLAGGED) {
-                    game->state[row][col] = HIDDEN;
-                    change_object_texture(obj, get_texture_by_name("hidden"));
-                }
+            break;
+        case (SDL_KEYDOWN):
+            if (event.key.keysym.sym == SDLK_SPACE) {
+                game->space_pressed = true;
             }
-        }
-        manual_update();
-    } else if (event.type == SDL_KEYDOWN) {
-        if (event.key.keysym.sym == SDLK_SPACE) {
-            game->space_pressed = true;
-        }
-    } else if (event.type == SDL_KEYUP) {
-        if (event.key.keysym.sym == SDLK_SPACE) {
-            game->space_pressed = false;
-        }
+            break;
+        case (SDL_KEYUP):
+            if (event.key.keysym.sym == SDLK_SPACE) {
+                game->space_pressed = false;
+            }
+            break;
     }
+    if (update) manual_update();
 }
 
 /**
@@ -178,6 +194,10 @@ static void init_game(Game *game) {
     game->start = true;
     game->game_over = false;
     game->space_pressed = false;
+    game->mx = 0;
+    game->my = 0;
+    game->vx = 0;
+    game->vy = 0;
 
     destroy_all_objects();
     create_tiles();
@@ -225,7 +245,7 @@ static void gen_numbers(Uint8 grid[HEIGHT][WIDTH]) {
             int count = 0;
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
-                    if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+                    if (!in_grid(row+i, col+j)) {
                         continue;
                     }
                     if (grid[row+i][col+j] == 9) {
@@ -277,6 +297,7 @@ static void start_game(Game *game, int row, int col) {
  */
 static void reveal_tile(Game *game, int row, int col) {
     game->state[row][col] = REVEALED;
+    game->score++;
     char name[6];
     sprintf(name, "%d_%d", row, col);
     Object *obj = get_object_by_name(name);
@@ -289,7 +310,7 @@ static void reveal_tile(Game *game, int row, int col) {
         if (game->grid[row][col] == 0) {
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
-                    if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+                    if (!in_grid(row+i, col+j)) {
                         continue;
                     }
                     if (game->state[row+i][col+j] == HIDDEN) {
@@ -299,6 +320,7 @@ static void reveal_tile(Game *game, int row, int col) {
             }
         }
     }
+    printf("Score: %d\n", game->score);
 }
 
 /**
@@ -336,7 +358,7 @@ static void reveal_number(Game *game, int row, int col) {
     int flag_count = 0;
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
-            if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+            if (!in_grid(row+i, col+j)) {
                 continue;
             }
             if (game->state[row+i][col+j] == FLAGGED) {
@@ -349,7 +371,7 @@ static void reveal_number(Game *game, int row, int col) {
     }
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
-            if (row + i < 0 || row + i >= HEIGHT || col + j < 0 || col + j >= WIDTH) {
+            if (!in_grid(row+i, col+j)) {
                 continue;
             }
             if (game->state[row+i][col+j] == HIDDEN) {
