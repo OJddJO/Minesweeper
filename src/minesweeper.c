@@ -115,9 +115,7 @@ static void handle_input(SDL_Event event, Game *game) {
             switch (event.button.button) {
                 case (SDL_BUTTON_LEFT):
                     if (game->start) start_game(game, row, col);
-
                     if (game->state[row][col] == FLAGGED) break;
-
                     if (in_grid(row, col)) {
                         if (game->state[row][col] == HIDDEN) reveal_tile(game, row, col);
                         else if (game->grid[row][col] >= 1 && game->grid[row][col] <= 8) {
@@ -266,7 +264,7 @@ static void create_tiles() {
         for (int col = 0; col < WIDTH; col++) {
             char name[6];
             sprintf(name, "%d_%d", row, col);
-            create_object(name, get_texture_by_name("hidden"), col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, true, NULL);
+            create_object(name, get_texture_by_id(3U), col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, true, NULL);
         }
     }
 }

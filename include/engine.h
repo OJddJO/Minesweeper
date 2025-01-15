@@ -215,7 +215,7 @@ void manual_update();
 // Texture functions
 
 Uint32 create_texture(char *filename, char *name);
-Texture *get_texture_by_id(int id);
+Texture *get_texture_by_id(Uint32 id);
 Texture *get_texture_by_name(char *name);
 void draw_texture(Texture *texture, int x, int y, int width, int height);
 void draw_texture_ex(Texture *texture, int x, int y, int width, int height, double angle, Point *center, Flip flip);
@@ -310,7 +310,7 @@ void close_all_fonts();
 // Audio functions
 
 Uint32 load_audio(char *filename, char *name);
-Audio *get_audio_by_id(int id);
+Audio *get_audio_by_id(Uint32 id);
 Audio *get_audio_by_name(char *name);
 void play_audio(Audio *audio, int channel);
 void play_audio_by_name(char *name, int channel);

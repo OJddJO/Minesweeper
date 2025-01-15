@@ -281,7 +281,7 @@ Uint32 create_texture(char *filename, char *name) {
  * \param id The id of the texture
  * \return The texture
  */
-Texture *get_texture_by_id(int id) {
+Texture *get_texture_by_id(Uint32 id) {
     _assert_engine_init();
     TextureList *current = _texture_list;
     while (current != NULL) {
@@ -1770,7 +1770,7 @@ Uint32 load_audio(char *filename, char *name) {
  * \param id The id of the audio
  * \return The audio
  */
-Audio *get_audio_by_id(int id) {
+Audio *get_audio_by_id(Uint32 id) {
     _assert_engine_init();
     Audiolist *current = _audio_list;
     while (current != NULL) {
