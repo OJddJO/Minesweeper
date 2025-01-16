@@ -151,20 +151,20 @@ static void init_assets() {
     Tilemap *tilemap = load_tilemap("assets/tiles.png", 6, 6, 0, 5, 5);
 
     // From 1 - 7
-    get_tile_as_texture("flag", tilemap, 0, 0);
-    get_tile_as_texture("mine", tilemap, 0, 1);
     get_tile_as_texture("hidden", tilemap, 2, 0);
+    get_tile_as_texture("mine", tilemap, 2, 1);
+    get_tile_as_texture("flag", tilemap, 2, 2);
     get_tile_as_texture("wrong", tilemap, 2, 3);
-    get_tile_as_texture("bad_flag", tilemap, 2, 4);
-    get_tile_as_texture("background", tilemap, 3, 4);
+    get_tile_as_texture("bad_flag", tilemap, 3, 0);
+    get_tile_as_texture("background", tilemap, 3, 3);
 
     // From 7 - 13
-    get_tile_as_texture("1", tilemap, 0, 2);
-    get_tile_as_texture("2", tilemap, 0, 3);
-    get_tile_as_texture("3", tilemap, 0, 4);
-    get_tile_as_texture("4", tilemap, 1, 0);
-    get_tile_as_texture("5", tilemap, 1, 1);
-    get_tile_as_texture("6", tilemap, 1, 2);
-    get_tile_as_texture("7", tilemap, 1, 3);
-    get_tile_as_texture("8", tilemap, 1, 4);
+    get_tile_as_texture("1", tilemap, 0, 0);
+    get_tile_as_texture("2", tilemap, 0, 1);
+    get_tile_as_texture("3", tilemap, 0, 2);
+    get_tile_as_texture("4", tilemap, 0, 3);
+    get_tile_as_texture("5", tilemap, 1, 0);
+    get_tile_as_texture("6", tilemap, 1, 1);
+    get_tile_as_texture("7", tilemap, 1, 2);
+    get_tile_as_texture("8", tilemap, 1, 3);
 }

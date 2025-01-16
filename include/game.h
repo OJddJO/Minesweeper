@@ -11,8 +11,10 @@
 
 #define SQUARE_SIZE 40
 
-#define WIN_W CHUNK_WIDTH * SQUARE_SIZE
-#define WIN_H CHUNK_HEIGHT * SQUARE_SIZE
+#define BORDER_SIZE 2.5
+
+#define WIN_W (int)(CHUNK_WIDTH + BORDER_SIZE*2) * SQUARE_SIZE
+#define WIN_H (int)(CHUNK_HEIGHT + BORDER_SIZE*2) * SQUARE_SIZE
 
 #define NUMBER_TILE_OFFSET 6
 
@@ -25,9 +27,9 @@ enum _state {
 };
 
 enum _textures {
-    T_FLAG = 1,
+    T_HIDDEN = 1,
     T_MINE,
-    T_HIDDEN,
+    T_FLAG,
     T_WRONG,
     T_BADFLAG,
     T_BACKGROUND,

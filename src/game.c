@@ -56,8 +56,8 @@ void init_game(Game *game) {
     game->space_pressed = false;
     game->mx = 0;
     game->my = 0;
-    game->vx = -CHUNK_HEIGHT * SQUARE_SIZE;
-    game->vy = -CHUNK_WIDTH * SQUARE_SIZE;
+    game->vx = -(CHUNK_HEIGHT - BORDER_SIZE) * SQUARE_SIZE;
+    game->vy = -(CHUNK_WIDTH - BORDER_SIZE) * SQUARE_SIZE;
     game->cx = 0;
     game->cy = 0;
 
@@ -178,7 +178,7 @@ void create_tiles(Game *game) {
                     }
                     break;
             }
-            create_object(name, texture, (col - CHUNK_WIDTH) * SQUARE_SIZE, (row - CHUNK_HEIGHT) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
+            create_object(name, texture, col * SQUARE_SIZE + game->vx, row * SQUARE_SIZE + game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
         }
     }
 }
