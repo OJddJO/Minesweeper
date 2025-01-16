@@ -1,25 +1,10 @@
 #include "game.h"
 
-static void init_game(Game *game);
-static void init_grid(Uint8 grid[HEIGHT][WIDTH]);
-static void gen_mines(Uint8 grid[HEIGHT][WIDTH]);
-static void gen_numbers(Uint8 grid[HEIGHT][WIDTH]);
-static void create_tiles();
-static void start_game(Game *game, int row, int col);
-static void reveal_tile(Game *game, int row, int col);
-static void reveal_bombs(Game *game, int row, int col);
-static void reveal_number(Game *game, int row, int col);
-static void gen_chunk();
-
 static void init_assets();
 
 static void draw(Game *game);
 static void handle_input(SDL_Event event, Game *game);
 static void update(Game *game);
-
-static inline bool in_grid(int row, int col) {
-    return row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH;
-}
 
 /**
  * Main function
@@ -38,13 +23,6 @@ int main(int argc, char *argv[]) {
     Game *game = (Game *)malloc(sizeof(Game));
     init_game(game);
 
-    // for (int row = 0; row < HEIGHT; row++) {
-    //     for (int col = 0; col < WIDTH; col++) {
-    //         printf("%d ", game->grid[row][col]);
-    //     }
-    //     printf("\n");
-    // }
-
     engine_run(update, draw, handle_input, game);
 
     destroy_all_objects();
@@ -60,8 +38,8 @@ int main(int argc, char *argv[]) {
  * \param game The game to draw
  */
 static void draw(Game *game) {
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
+    for (int row = 0; row < MAP_HEIGHT; row++) {
+        for (int col = 0; col < MAP_WIDTH; col++) {
             char name[6];
             sprintf(name, "%d_%d", row, col);
             draw_object(get_object_by_name(name));
@@ -87,8 +65,8 @@ static void update(Game *game) {
         dx -= game->mx;
         dy -= game->my;
         if (dx != 0 || dy != 0) {
-            for (int row = 0; row < HEIGHT; row++) {
-                for (int col = 0; col < WIDTH; col++) {
+            for (int row = 0; row < MAP_HEIGHT; row++) {
+                for (int col = 0; col < MAP_WIDTH; col++) {
                     char name[6];
                     sprintf(name, "%d_%d", row, col);
                     Object *obj = get_object_by_name(name);
@@ -188,200 +166,4 @@ static void init_assets() {
     get_tile_as_texture("6", tilemap, 1, 2);
     get_tile_as_texture("7", tilemap, 1, 3);
     get_tile_as_texture("8", tilemap, 1, 4);
-}
-
-/**
- * Initializes the game structure
- * \param game The game to initialize
- */
-static void init_game(Game *game) {
-    init_grid(game->state);
-    game->score = 0;
-    game->start = true;
-    game->game_over = false;
-    game->space_pressed = false;
-    game->mx = 0;
-    game->my = 0;
-    game->vx = 0;
-    game->vy = 0;
-
-    destroy_all_objects();
-    create_tiles();
-}
-
-/**
- * Initializes the grid with 0s
- * \param grid The grid to initialize
- */
-static void init_grid(Uint8 grid[HEIGHT][WIDTH]) {
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
-            grid[row][col] = 0;
-        }
-    }
-}
-
-/**
- * Generates the mines in the grid
- * \param grid The grid to generate the mines in
- */
-static void gen_mines(Uint8 grid[HEIGHT][WIDTH]) {
-    for (int i = 0; i < MINES; i++) {
-        int row = rand() % HEIGHT;
-        int col = rand() % WIDTH;
-        if (grid[row][col] == 9) {
-            i--;
-        } else {
-            grid[row][col] = 9;
-        }
-    }
-}
-
-/**
- * Generates the numbers in the grid
- * \param grid The grid to generate the numbers in
- */
-static void gen_numbers(Uint8 grid[HEIGHT][WIDTH]) {
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
-            if (grid[row][col] == 9) {
-                continue;
-            }
-
-            int count = 0;
-            for (int i = -1; i < 2; i++) {
-                for (int j = -1; j < 2; j++) {
-                    if (!in_grid(row+i, col+j)) {
-                        continue;
-                    }
-                    if (grid[row+i][col+j] == 9) {
-                        count++;
-                    }
-                }
-            }
-            grid[row][col] = count;
-        }
-    }
-}
-
-/**
- * Creates the tiles
- */
-static void create_tiles() {
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
-            char name[6];
-            sprintf(name, "%d_%d", row, col);
-            create_object(name, get_texture(T_HIDDEN), col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, true, NULL);
-        }
-    }
-}
-
-/**
- * Starts the game
- * \param game The game to start
- */
-static void start_game(Game *game, int row, int col) {
-    init_grid(game->grid);
-    gen_mines(game->grid);
-    gen_numbers(game->grid);
-
-    while (game->grid[row][col] != 0) {
-        init_grid(game->grid);
-        gen_mines(game->grid);
-        gen_numbers(game->grid);
-    }
-
-    game->start = false;
-}
-
-/**
- * Reveals a tile
- * \param game The game to reveal the tile in
- * \param row The row of the tile to reveal
- * \param col The column of the tile to reveal
- */
-static void reveal_tile(Game *game, int row, int col) {
-    game->state[row][col] = REVEALED;
-    char name[6];
-    sprintf(name, "%d_%d", row, col);
-    Object *obj = get_object_by_name(name);
-    if (game->grid[row][col] == 9) {
-        change_object_texture(obj, get_texture(T_WRONG));
-        reveal_bombs(game, row, col);
-        game->game_over = true;
-    } else {
-        game->score++;
-        change_object_texture(obj, get_texture(game->grid[row][col] + NUMBER_TILE_OFFSET));
-        if (game->grid[row][col] == 0) {
-            for (int i = -1; i < 2; i++) {
-                for (int j = -1; j < 2; j++) {
-                    if (!in_grid(row+i, col+j)) {
-                        continue;
-                    }
-                    if (game->state[row+i][col+j] == HIDDEN) {
-                        reveal_tile(game, row+i, col+j);
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Reveals all bombs
- * \param game The game to reveal the bombs in
- */
-static void reveal_bombs(Game *game, int row, int col) {
-    for (int row_ = 0; row_ < HEIGHT; row_++) {
-        for (int col_ = 0; col_ < WIDTH; col_++) {
-            char name[6];
-            sprintf(name, "%d_%d", row_, col_);
-            Object *obj = get_object_by_name(name);
-            if ((row_ == row && col_ == col) || game->state[row_][col_] == REVEALED) {
-                continue;
-            }
-            if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] == 9) {
-                continue;
-            } else if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
-                change_object_texture(obj, get_texture(T_BADFLAG));
-            } else if (game->grid[row_][col_] == 9) {
-                change_object_texture(obj, get_texture(T_MINE));
-            }
-        }
-    }
-}
-
-/**
- * Reveals around the number tile if all flags are placed
- * \param game The game to reveal the number in
- * \param row The row of the number tile
- * \param col The column of the number tile
- */
-static void reveal_number(Game *game, int row, int col) {
-    int n = game->grid[row][col];
-    int flag_count = 0;
-    for (int i = -1; i < 2; i++) {
-        for (int j = -1; j < 2; j++) {
-            if (!in_grid(row+i, col+j)) {
-                continue;
-            }
-            if (game->state[row+i][col+j] == FLAGGED) {
-                flag_count++;
-            }
-        }
-    }
-    if (flag_count != n) {
-        return;
-    }
-    for (int i = -1; i < 2; i++) {
-        for (int j = -1; j < 2; j++) {
-            if (!in_grid(row+i, col+j)) {
-                continue;
-            }
-            if (game->state[row+i][col+j] == HIDDEN) {
-                reveal_tile(game, row+i, col+j);
-            }
-        }
-    }
 }
