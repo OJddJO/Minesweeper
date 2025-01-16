@@ -35,20 +35,23 @@ enum _textures {
 
 typedef struct _Game {
     Uint8 grid[MAP_HEIGHT][MAP_WIDTH]; // Minesweeper grid
-    Uint8 state[MAP_HEIGHT][MAP_WIDTH]; // State of each tile (hidden, revealed, flagged)
     Uint32 score;
-    bool start; // First click
     bool game_over; // Game over
     bool space_pressed; // Space pressed to move the grid
     int mx, my; // Mouse position
     int vx, vy; // Viewport position
-    int chunkX, chunkY; // CENTER chunk coordinates
-    int vchunkX, vchunkY; // Viewport chunk coordinates
+    int cx, cy; // CENTER chunk coordinates
 } Game;
 
 inline bool in_grid(int row, int col) {
     return row >= 0 && row < MAP_HEIGHT && col >= 0 && col < MAP_WIDTH;
 }
+
+void get_tile_info(Uint8 tile, Uint8 *value, Uint8 *state);
+Uint8 get_tile_value(Uint8 tile);
+Uint8 get_tile_state(Uint8 tile);
+void store_tile_value(Uint8 *tile, Uint8 value);
+void store_tile_state(Uint8 *tile, Uint8 state);
 
 void init_game(Game *game);
 void init_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]);
@@ -59,6 +62,7 @@ void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]);
 
 void create_tiles(Game *game);
 void start_game(Game *game, int row, int col);
+
 void reveal_tile(Game *game, int row, int col);
 void reveal_bombs(Game *game, int row, int col);
 void reveal_number(Game *game, int row, int col);

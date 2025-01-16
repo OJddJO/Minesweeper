@@ -1,26 +1,69 @@
 #include "game.h"
 
 /**
+ * Gets the value and state of a tile
+ * \param tile The tile to get the info from
+ * \param value The variable to store the value in
+ * \param state The variable to store the state in
+ */
+void get_tile_info(Uint8 tile, Uint8 *value, Uint8 *state) {
+    *value = (Uint8)(tile & 0b00001111);
+    *state = (Uint8)((tile & 0b11000000) >> 6);
+}
+
+/**
+ * Gets the value of a tile
+ * \param tile The tile to get the value from
+ */
+Uint8 get_tile_value(Uint8 tile) {
+    return (Uint8)(tile & 0b00001111);
+}
+
+/**
+ * Gets the state of a tile
+ * \param tile The tile to get the state from
+ */
+Uint8 get_tile_state(Uint8 tile) {
+    return (Uint8)((tile & 0b11000000) >> 6);
+}
+
+/**
+ * Stores a value in a tile
+ * \param tile The tile to store the value in
+ * \param value The value to store
+ */
+void store_tile_value(Uint8 *tile, Uint8 value) {
+    *tile = (Uint8)((*tile & 0b11000000) | value);
+}
+
+/**
+ * Stores a state in a tile
+ * \param tile The tile to store the state in
+ * \param state The state to store
+ */
+void store_tile_state(Uint8 *tile, Uint8 state) {
+    *tile = (Uint8)((*tile & 0b00001111) | (state << 6));
+}
+
+/**
  * Initializes the game structure
  * \param game The game to initialize
  */
 void init_game(Game *game) {
-    init_grid(game->state);
+    init_grid(game->grid);
     game->score = 0;
-    game->start = true;
     game->game_over = false;
     game->space_pressed = false;
     game->mx = 0;
     game->my = 0;
     game->vx = -CHUNK_HEIGHT * SQUARE_SIZE;
     game->vy = -CHUNK_WIDTH * SQUARE_SIZE;
-    game->chunkX = 0;
-    game->chunkY = 0;
-    game->vchunkX = 0;
-    game->vchunkY = 0;
+    game->cx = 0;
+    game->cy = 0;
 
     destroy_all_objects();
     create_tiles(game);
+    start_game(game, 15, 15);
 }
 
 /**
@@ -100,7 +143,8 @@ void gen_mines(Uint8 grid[CHUNK_HEIGHT][CHUNK_WIDTH]) {
     for (int i = 0; i < MINES; i++) {
         int row = rand() % CHUNK_HEIGHT;
         int col = rand() % CHUNK_WIDTH;
-        if (grid[row][col] == 9) {
+        Uint8 value, state;
+        if (value == 9) {
             i--;
         } else {
             grid[row][col] = 9;
@@ -117,7 +161,9 @@ void create_tiles(Game *game) {
             char name[20];
             sprintf(name, "%d_%d", row, col);
             Texture *texture;
-            switch (game->state[row][col])  {
+            Uint8 value, state;
+            get_tile_info(game->grid[row][col], &value, &state);
+            switch (state)  {
                 case HIDDEN:
                     texture = get_texture(T_HIDDEN);
                     break;
@@ -125,10 +171,10 @@ void create_tiles(Game *game) {
                     texture = get_texture(T_FLAG);
                     break;
                 case REVEALED:
-                    if (game->grid[row][col] == 9) {
+                    if (value == 9) {
                         texture = get_texture(T_WRONG);
                     } else {
-                        texture = get_texture(game->grid[row][col] + NUMBER_TILE_OFFSET);
+                        texture = get_texture(value + NUMBER_TILE_OFFSET);
                     }
                     break;
             }
@@ -143,7 +189,7 @@ void create_tiles(Game *game) {
  */
 void start_game(Game *game, int row, int col) {
     init_grid(game->grid);
-    
+
     Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -166,7 +212,7 @@ void start_game(Game *game, int row, int col) {
     //     printf("\n");
     // }
 
-    game->start = false;
+    reveal_tile(game, row, col);
 }
 
 /**
@@ -176,24 +222,26 @@ void start_game(Game *game, int row, int col) {
  * \param col The column of the tile to reveal
  */
 void reveal_tile(Game *game, int row, int col) {
-    game->state[row][col] = REVEALED;
-    char name[6];
+    store_tile_state(&game->grid[row][col], REVEALED);
+    char name[10];
     sprintf(name, "%d_%d", row, col);
     Object *obj = get_object_by_name(name);
-    if (game->grid[row][col] == 9) {
+    Uint8 value = get_tile_value(game->grid[row][col]);
+    if (value == 9) {
         change_object_texture(obj, get_texture(T_WRONG));
         reveal_bombs(game, row, col);
         game->game_over = true;
     } else {
         game->score++;
-        change_object_texture(obj, get_texture(game->grid[row][col] + NUMBER_TILE_OFFSET));
-        if (game->grid[row][col] == 0) {
+        change_object_texture(obj, get_texture(value + NUMBER_TILE_OFFSET));
+        if (value == 0) {
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
                     if (!in_grid(row+i, col+j)) {
                         continue;
                     }
-                    if (game->state[row+i][col+j] == HIDDEN) {
+                    Uint8 state = get_tile_state(game->grid[row+i][col+j]);
+                    if (state == HIDDEN) {
                         reveal_tile(game, row+i, col+j);
                     }
                 }
@@ -209,17 +257,19 @@ void reveal_tile(Game *game, int row, int col) {
 void reveal_bombs(Game *game, int row, int col) {
     for (int row_ = 0; row_ < MAP_HEIGHT; row_++) {
         for (int col_ = 0; col_ < MAP_WIDTH; col_++) {
-            char name[6];
+            char name[10];
             sprintf(name, "%d_%d", row_, col_);
             Object *obj = get_object_by_name(name);
-            if ((row_ == row && col_ == col) || game->state[row_][col_] == REVEALED) {
+            Uint8 value, state;
+            get_tile_info(game->grid[row_][col_], &value, &state);
+            if ((row_ == row && col_ == col) || state == REVEALED) {
                 continue;
             }
-            if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] == 9) {
+            if (state == FLAGGED && value == 9) {
                 continue;
-            } else if (game->state[row_][col_] == FLAGGED && game->grid[row_][col_] != 9) {
+            } else if (state == FLAGGED && value != 9) {
                 change_object_texture(obj, get_texture(T_BADFLAG));
-            } else if (game->grid[row_][col_] == 9) {
+            } else if (value == 9) {
                 change_object_texture(obj, get_texture(T_MINE));
             }
         }
@@ -233,14 +283,14 @@ void reveal_bombs(Game *game, int row, int col) {
  * \param col The column of the number tile
  */
 void reveal_number(Game *game, int row, int col) {
-    int n = game->grid[row][col];
+    Uint8 n = get_tile_value(game->grid[row][col]);
     int flag_count = 0;
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             if (!in_grid(row+i, col+j)) {
                 continue;
             }
-            if (game->state[row+i][col+j] == FLAGGED) {
+            if (get_tile_state(game->grid[row+i][col+j]) == FLAGGED) {
                 flag_count++;
             }
         }
@@ -253,7 +303,7 @@ void reveal_number(Game *game, int row, int col) {
             if (!in_grid(row+i, col+j)) {
                 continue;
             }
-            if (game->state[row+i][col+j] == HIDDEN) {
+            if (get_tile_state(game->grid[row+i][col+j]) == HIDDEN) {
                 reveal_tile(game, row+i, col+j);
             }
         }

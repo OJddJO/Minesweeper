@@ -40,16 +40,16 @@ int main(int argc, char *argv[]) {
 static void draw(Game *game) {
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
-            char name[6];
+            char name[10];
             sprintf(name, "%d_%d", row, col);
             draw_object(get_object_by_name(name));
         }
     }
-    char score[31];
+    char score[11];
     sprintf(score, "Score: %d", game->score);
     draw_text("font", score, 11, WIN_H - 9, (SDL_Color){0, 0, 0, 255}, SW);
     draw_text("font", score, 10, WIN_H - 10, (SDL_Color){255, 255, 255, 255}, SW);
-    char title[70];
+    char title[34];
     sprintf(title, "Minesweeper - %s - %s", game->game_over ? "Game Over" : "Playing", score);
     set_window_title(title);
 }
@@ -67,7 +67,7 @@ static void update(Game *game) {
         if (dx != 0 || dy != 0) {
             for (int row = 0; row < MAP_HEIGHT; row++) {
                 for (int col = 0; col < MAP_WIDTH; col++) {
-                    char name[6];
+                    char name[10];
                     sprintf(name, "%d_%d", row, col);
                     Object *obj = get_object_by_name(name);
                     obj->x += dx;
@@ -100,13 +100,14 @@ static void handle_input(SDL_Event event, Game *game) {
             get_mouse_position(&x, &y);
             int row = (y - game->vy) / SQUARE_SIZE;
             int col = (x - game->vx) / SQUARE_SIZE;
+            Uint8 value, state;
+            get_tile_info(game->grid[row][col], &value, &state);
             switch (event.button.button) {
                 case (SDL_BUTTON_LEFT):
-                    if (game->start) start_game(game, row, col);
-                    if (game->state[row][col] == FLAGGED) break;
+                    if (state == FLAGGED) break;
                     if (in_grid(row, col)) {
-                        if (game->state[row][col] == HIDDEN) reveal_tile(game, row, col);
-                        else if (game->grid[row][col] >= 1 && game->grid[row][col] <= 8) {
+                        if (state == HIDDEN) reveal_tile(game, row, col);
+                        else if (value >= 1 && value <= 8) {
                             reveal_number(game, row, col);
                         }
                         update = true;
@@ -114,14 +115,14 @@ static void handle_input(SDL_Event event, Game *game) {
                     break;
                 case (SDL_BUTTON_RIGHT):
                     if (in_grid(row, col)) {
-                        char name[6];
+                        char name[10];
                         sprintf(name, "%d_%d", row, col);
                         Object *obj = get_object_by_name(name);
-                        if (game->state[row][col] == HIDDEN) {
-                            game->state[row][col] = FLAGGED;
+                        if (state == HIDDEN) {
+                            store_tile_state(&game->grid[row][col], FLAGGED);
                             change_object_texture(obj, get_texture(T_FLAG));
-                        } else if (game->state[row][col] == FLAGGED) {
-                            game->state[row][col] = HIDDEN;
+                        } else if (state == FLAGGED) {
+                            store_tile_state(&game->grid[row][col], HIDDEN);
                             change_object_texture(obj, get_texture(T_HIDDEN));
                         }
                         update = true;
