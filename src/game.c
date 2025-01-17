@@ -56,13 +56,11 @@ void init_game(Game *game) {
     game->space_pressed = false;
     game->mx = 0;
     game->my = 0;
-    game->vx = -(CHUNK_HEIGHT - BORDER_SIZE) * SQUARE_SIZE;
-    game->vy = -(CHUNK_WIDTH - BORDER_SIZE) * SQUARE_SIZE;
-    game->cx = 0;
-    game->cy = 0;
+    game->vx = (CHUNK_HEIGHT - BORDER_SIZE) * SQUARE_SIZE;
+    game->vy = (CHUNK_WIDTH - BORDER_SIZE) * SQUARE_SIZE;
+    game->cx = 1;
+    game->cy = 1;
 
-    destroy_all_objects();
-    create_tiles(game);
     start_game(game, 15, 15);
 }
 
@@ -102,7 +100,7 @@ void load_chunks_to_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH], Uint8 chunks[3][3][C
 void gen_numbers(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
-            if (grid[row][col] == 9) {
+            if (get_tile_value(grid[row][col]) == 9) {
                 continue;
             }
 
@@ -112,12 +110,12 @@ void gen_numbers(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
                     if (!in_grid(row+i, col+j)) {
                         continue;
                     }
-                    if (grid[row+i][col+j] == 9) {
+                    if (get_tile_value(grid[row+i][col+j]) == 9) {
                         count++;
                     }
                 }
             }
-            grid[row][col] = count;
+            store_tile_value(&grid[row][col], count);
         }
     }
 }
@@ -139,15 +137,14 @@ void gen_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
  * Generates the mines in a chunk
  * \param chunk The chunk to generate the mines in
  */
-void gen_mines(Uint8 grid[CHUNK_HEIGHT][CHUNK_WIDTH]) {
+void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
     for (int i = 0; i < MINES; i++) {
         int row = rand() % CHUNK_HEIGHT;
         int col = rand() % CHUNK_WIDTH;
-        Uint8 value, state;
-        if (value == 9) {
+        if (chunk[row][col] == 9) {
             i--;
         } else {
-            grid[row][col] = 9;
+            chunk[row][col] = 9;
         }
     }
 }
@@ -156,6 +153,7 @@ void gen_mines(Uint8 grid[CHUNK_HEIGHT][CHUNK_WIDTH]) {
  * Creates the tiles for the full grid
  */
 void create_tiles(Game *game) {
+    destroy_all_objects();
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
             char name[20];
@@ -178,7 +176,7 @@ void create_tiles(Game *game) {
                     }
                     break;
             }
-            create_object(name, texture, col * SQUARE_SIZE + game->vx, row * SQUARE_SIZE + game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
+            create_object(name, texture, col * SQUARE_SIZE - game->vx, row * SQUARE_SIZE - game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
         }
     }
 }
@@ -189,30 +187,34 @@ void create_tiles(Game *game) {
  */
 void start_game(Game *game, int row, int col) {
     init_grid(game->grid);
-
     Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            gen_chunk(chunks[i][j]);
+    if (!file_exists("saves/1.1.msav")) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                gen_chunk(chunks[i][j]);
+            }
         }
-    }
-    load_chunks_to_grid(game->grid, chunks);
-    gen_numbers(game->grid);
-
-    while (game->grid[row][col] != 0) {
-        gen_chunk(chunks[1][1]);
         load_chunks_to_grid(game->grid, chunks);
         gen_numbers(game->grid);
+
+        while (game->grid[row][col] != 0) {
+            gen_chunk(chunks[1][1]);
+            load_chunks_to_grid(game->grid, chunks);
+            gen_numbers(game->grid);
+        }
+
+        create_tiles(game);
+        reveal_tile(game, row, col);
+        save_chunks(game);
+    } else {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                load_chunk(chunks[i][j], j, i);
+            }
+        }
+        load_chunks_to_grid(game->grid, chunks);
+        create_tiles(game);
     }
-
-    // for (int row = 0; row < MAP_HEIGHT; row++) {
-    //     for (int col = 0; col < MAP_WIDTH; col++) {
-    //         printf("%d ", game->grid[row][col]);
-    //     }
-    //     printf("\n");
-    // }
-
-    reveal_tile(game, row, col);
 }
 
 /**
@@ -230,6 +232,7 @@ void reveal_tile(Game *game, int row, int col) {
     if (value == 9) {
         change_object_texture(obj, get_texture(T_WRONG));
         reveal_bombs(game, row, col);
+        delete_save();
         game->game_over = true;
     } else {
         game->score++;
@@ -308,4 +311,226 @@ void reveal_number(Game *game, int row, int col) {
             }
         }
     }
+}
+
+/**
+ * Calculates current centered chunk
+ * \param game The game to calculate the centered chunk for
+ * \param x The variable to store the x coordinate in
+ * \param y The variable to store the y coordinate in
+ */
+void calc_current_centered_chunk(Game *game, int *x, int *y) {
+    *x = (int)floor((game->vx + (game->cx * CHUNK_WIDTH + BORDER_SIZE) * SQUARE_SIZE + (CHUNK_WIDTH  * SQUARE_SIZE) / 2) / (CHUNK_WIDTH * SQUARE_SIZE)) - 1;
+    *y = (int)floor((game->vy + (game->cy * CHUNK_HEIGHT + BORDER_SIZE) * SQUARE_SIZE + (CHUNK_HEIGHT * SQUARE_SIZE) / 2) / (CHUNK_HEIGHT * SQUARE_SIZE)) - 1;
+}
+
+/**
+ * Shifts the chunks in the game
+ * \param game The game to shift the chunks for
+ * \param dx The x direction of the shift
+ * \param dy The y direction of the shift
+ */
+void shift_game_chunks(Game *game, int dx, int dy) {
+    Uint8 result[MAP_HEIGHT][MAP_WIDTH];
+    init_grid(result);
+    for (int row = 0; row < MAP_HEIGHT; row++) {
+        for (int col = 0; col < MAP_WIDTH; col++) {
+            if (in_grid(row + dy * CHUNK_HEIGHT, col + dx * CHUNK_WIDTH)) {
+                result[row][col] = game->grid[row + dy * CHUNK_HEIGHT][col + dx * CHUNK_WIDTH];
+            }
+        }
+    }
+    for (int row = 0; row < MAP_HEIGHT; row++) {
+        for (int col = 0; col < MAP_WIDTH; col++) {
+            game->grid[row][col] = result[row][col];
+        }
+    }
+
+    game->vx -= dx * CHUNK_WIDTH * SQUARE_SIZE;
+    game->vy -= dy * CHUNK_HEIGHT * SQUARE_SIZE;
+}
+
+/**
+ * Checks if a mine is valid in the chunk and removes it if it is not
+ * \param game The game tile to check the mine for
+ * \param chunk The chunk to check the mine for
+ * \param row The row of the mine (in the chunk)
+ * \param col The column of the mine (in the chunk)
+ * \param crow The row of the chunk
+ * \param ccol The column of the chunk
+ */
+void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col, int crow, int ccol) {
+    //check around the mine if there is already a number
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            if (!in_grid(crow*CHUNK_HEIGHT + row + i, ccol*CHUNK_WIDTH + col + j)) {
+                continue;
+            }
+            Uint8 state = get_tile_state(game->grid[crow*CHUNK_HEIGHT + row + i][ccol*CHUNK_WIDTH + col + j]);
+            if (state == REVEALED) {
+                chunk[row][col] = 0;
+                return;
+            }
+        }
+    }
+}
+
+/**
+ * Adds a chunk to a running game
+ * \param game The game to add the chunk to
+ * \param chunk The chunk to add
+ * \param row The row of the chunk
+ * \param col The column of the chunk
+ */
+void add_chunk_to_game(Game *game, int row, int col) {
+    Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
+    gen_chunk(chunk);
+    for (int row_ = 0; row_ < CHUNK_HEIGHT; row_++) {
+        for (int col_ = 0; col_ < CHUNK_WIDTH; col_++) {
+            bool is_border = row_ == 0 || row_ == CHUNK_WIDTH-1 || col_ == 0 || col_ == CHUNK_HEIGHT-1;
+            if (is_border && chunk[row_][col_] == 9) {
+                check_mine_valid(game, chunk, row_, col_, row, col);
+            }
+            game->grid[row*CHUNK_HEIGHT + row_][col*CHUNK_WIDTH + col_] = chunk[row_][col_];
+        }
+    }
+}
+
+/**
+ * Post processes the shift of the chunks (generates new chunks, numbers)
+ * \param game The game to post process the shift for
+ * \param dx The x direction of the shift
+ * \param dy The y direction of the shift
+ */
+void post_process_shift_chunks(Game *game, int dx, int dy) {
+    if (dx != 0) {
+        int col = dx == 1 ? 2 : 0;
+        for (int row = 0; row < 3; row++) {
+            add_chunk_to_game(game, row, col);
+        }
+    }
+    if (dy != 0) {
+        int row = dy == 1 ? 2 : 0;
+        for (int col = 0; col < 3; col++) {
+            add_chunk_to_game(game, row, col);
+        }
+    }
+
+    gen_numbers(game->grid);
+
+    // for (int row = 0; row < MAP_HEIGHT; row++) {
+    //     for (int col = 0; col < MAP_WIDTH; col++) {
+    //         printf("%d ", game->grid[row][col]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+}
+
+/**
+ * Save a single chunk in a file
+ * \param chunk The chunk to save
+ * \param row The row of the chunk
+ * \param col The column of the chunk
+ */
+void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
+    char filename[30];
+    sprintf(filename, "saves/%d.%d.msav", row, col);
+    FILE *file = fopen(filename, "wb");
+    fwrite(chunk, sizeof(Uint8), CHUNK_HEIGHT * CHUNK_WIDTH, file);
+    fclose(file);
+}
+
+/**
+ * Saves the chunks of the game
+ * \param game The game to save the chunks from
+ */
+void save_chunks(Game *game) {
+    for (int i = game->cx - 1; i < 3; i++) { // iter through col
+        for (int j = game->cy - 1; j < 3; j++) { // iter through row
+            Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
+            for (int row = 0; row < CHUNK_HEIGHT; row++) {
+                for (int col = 0; col < CHUNK_WIDTH; col++) {
+                    chunk[row][col] = game->grid[i*CHUNK_HEIGHT + row][j*CHUNK_WIDTH + col];
+                }
+            }
+            save_chunk(chunk, j, i);
+        }
+    }
+}
+
+/**
+ * Loads a single chunk from a file
+ * \param chunk The chunk to load
+ * \param row The row of the chunk
+ * \param col The column of the chunk
+ */
+void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
+    char filename[30];
+    sprintf(filename, "saves/%d.%d.msav", row, col);
+    FILE *file = fopen(filename, "rb");
+
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file %s\n", filename);
+        exit(1);
+    }
+
+    for (int i = 0; i < CHUNK_HEIGHT; i++) {
+        for (int j = 0; j < CHUNK_WIDTH; j++) {
+            fread(&chunk[i][j], sizeof(Uint8), 1, file);
+        }
+    }
+    fclose(file);
+}
+
+/**
+ * Loads 9x9 chunks to the game
+ * \param game The game to load the chunks to
+ * \param row The row of the center chunk to load
+ * \param col The column of the center chunk to load
+ */
+void load_chunks(Game *game, int row, int col) {
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
+            load_chunk(chunk, row + i, col + j);
+            for (int row_ = 0; row_ < CHUNK_HEIGHT; row_++) {
+                for (int col_ = 0; col_ < CHUNK_WIDTH; col_++) {
+                    game->grid[(i+1)*CHUNK_HEIGHT + row_][(j+1)*CHUNK_WIDTH + col_] = chunk[row_][col_];
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Deletes the save files
+ */
+void delete_save() {
+    DIR *dir = opendir("saves");
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") || strcmp(entry->d_name, "..")) {
+            continue;
+        }
+        char filename[30];
+        sprintf(filename, "saves/%s", entry->d_name);
+        if (remove(filename)) {
+            fprintf(stderr, "Error deleting file %s\n", filename);
+            exit(1);
+        }
+    }
+}
+
+/**
+ * Checks if a file exists
+ * \param filename The name of the file to check
+ */
+bool file_exists(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file) {
+        fclose(file);
+        return true;
+    }
+    return false;
 }

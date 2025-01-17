@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     set_window_icon("assets/icon.png");
 
     srand(time(NULL));
+    CreateDirectory("saves", NULL);
 
     init_assets();
     load_font("assets/font.ttf", 20, "font");
@@ -45,11 +46,11 @@ static void draw(Game *game) {
             draw_object(get_object_by_name(name));
         }
     }
-    char score[11];
+    char score[20];
     sprintf(score, "Score: %d", game->score);
     draw_text("font", score, 11, WIN_H - 9, (SDL_Color){0, 0, 0, 255}, SW);
     draw_text("font", score, 10, WIN_H - 10, (SDL_Color){255, 255, 255, 255}, SW);
-    char title[34];
+    char title[50];
     sprintf(title, "Minesweeper - %s - %s", game->game_over ? "Game Over" : "Playing", score);
     set_window_title(title);
 }
@@ -59,6 +60,7 @@ static void draw(Game *game) {
  * \param game The game to update
  */
 static void update(Game *game) {
+    if (game->game_over) return;
     if (game->space_pressed) {
         int dx, dy;
         get_mouse_position(&dx, &dy);
@@ -74,8 +76,27 @@ static void update(Game *game) {
                     obj->y += dy;
                 }
             }
-            game->vx += dx;
-            game->vy += dy;
+            game->vx -= dx;
+            game->vy -= dy;
+        }
+        int x, y;
+        calc_current_centered_chunk(game, &x, &y);
+        if (x != game->cx || y != game->cy) { // If the centered chunk has changed
+            save_chunks(game);
+            int dx = x - game->cx;
+            int dy = y - game->cy;
+
+            char filename[30];
+            sprintf(filename, "saves/%d.%d.msav", y, x);
+            if (file_exists(filename)) { //does not work: the centered chunk can be saved without the surrounding ones being saved
+                shift_game_chunks(game, dx, dy);
+                post_process_shift_chunks(game, dx, dy);
+            } else {
+                load_chunks(game, y, x);
+            }
+            create_tiles(game);
+            game->cy = y;
+            game->cx = x;
         }
         manual_update();
     }
@@ -92,14 +113,15 @@ static void handle_input(SDL_Event event, Game *game) {
     switch (event.type) {
         case (SDL_MOUSEBUTTONDOWN):
             if (game->game_over) {
+                delete_save();
                 init_game(game);
                 update = true;
                 break;
             }
             int x, y;
             get_mouse_position(&x, &y);
-            int row = (y - game->vy) / SQUARE_SIZE;
-            int col = (x - game->vx) / SQUARE_SIZE;
+            int row = (y + game->vy) / SQUARE_SIZE;
+            int col = (x + game->vx) / SQUARE_SIZE;
             Uint8 value, state;
             get_tile_info(game->grid[row][col], &value, &state);
             switch (event.button.button) {
@@ -141,14 +163,19 @@ static void handle_input(SDL_Event event, Game *game) {
             }
             break;
     }
-    if (update) manual_update();
+    if (update) {
+        if (!game->game_over) {
+            save_chunks(game);
+        }
+        manual_update();
+    }
 }
 
 /**
  * Initializes the assets
  */
 static void init_assets() {
-    Tilemap *tilemap = load_tilemap("assets/tiles.png", 6, 6, 0, 5, 5);
+    Tilemap *tilemap = load_tilemap("assets/tiles.png", 6, 6, 0, 4, 4);
 
     // From 1 - 7
     get_tile_as_texture("hidden", tilemap, 2, 0);
