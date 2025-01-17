@@ -13,7 +13,7 @@
 
 #define SQUARE_SIZE 30
 
-#define BORDER_SIZE 10.5
+#define BORDER_SIZE 1.5
 
 #define WIN_W (int)(CHUNK_WIDTH + BORDER_SIZE*2) * SQUARE_SIZE
 #define WIN_H (int)(CHUNK_HEIGHT + BORDER_SIZE*2) * SQUARE_SIZE

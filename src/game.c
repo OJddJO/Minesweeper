@@ -187,8 +187,8 @@ void create_tiles(Game *game) {
  */
 void start_game(Game *game, int row, int col) {
     init_grid(game->grid);
-    Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
     if (!file_exists("saves/1.1.msav")) {
+        Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 gen_chunk(chunks[i][j]);
@@ -207,12 +207,7 @@ void start_game(Game *game, int row, int col) {
         reveal_tile(game, row, col);
         save_chunks(game);
     } else {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                load_chunk(chunks[i][j], j, i);
-            }
-        }
-        load_chunks_to_grid(game->grid, chunks);
+        load_chunks(game, 1, 1); // start chunk is 1, 1
         create_tiles(game);
     }
 }
@@ -417,14 +412,6 @@ void post_process_shift_chunks(Game *game, int dx, int dy) {
     }
 
     gen_numbers(game->grid);
-
-    // for (int row = 0; row < MAP_HEIGHT; row++) {
-    //     for (int col = 0; col < MAP_WIDTH; col++) {
-    //         printf("%d ", game->grid[row][col]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
 }
 
 /**
@@ -446,15 +433,15 @@ void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
  * \param game The game to save the chunks from
  */
 void save_chunks(Game *game) {
-    for (int i = game->cx - 1; i < 3; i++) { // iter through col
-        for (int j = game->cy - 1; j < 3; j++) { // iter through row
+    for (int crow = game->cy - 1; crow < game->cy + 2; crow++) { // iter through row
+        for (int ccol = game->cx - 1; ccol < game->cx + 2; ccol++) { // iter through col
             Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
             for (int row = 0; row < CHUNK_HEIGHT; row++) {
                 for (int col = 0; col < CHUNK_WIDTH; col++) {
-                    chunk[row][col] = game->grid[i*CHUNK_HEIGHT + row][j*CHUNK_WIDTH + col];
+                    chunk[row][col] = game->grid[crow*CHUNK_HEIGHT + row][ccol*CHUNK_WIDTH + col];
                 }
             }
-            save_chunk(chunk, j, i);
+            save_chunk(chunk, crow, ccol);
         }
     }
 }
@@ -468,6 +455,7 @@ void save_chunks(Game *game) {
 void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
     char filename[30];
     sprintf(filename, "saves/%d.%d.msav", row, col);
+    printf("%s\n", filename);
     FILE *file = fopen(filename, "rb");
 
     if (file == NULL) {
@@ -475,9 +463,9 @@ void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
         exit(1);
     }
 
-    for (int i = 0; i < CHUNK_HEIGHT; i++) {
-        for (int j = 0; j < CHUNK_WIDTH; j++) {
-            fread(&chunk[i][j], sizeof(Uint8), 1, file);
+    for (int row = 0; row < CHUNK_HEIGHT; row++) {
+        for (int col = 0; col < CHUNK_WIDTH; col++) {
+            fread(&chunk[row][col], sizeof(Uint8), 1, file);
         }
     }
     fclose(file);
@@ -490,17 +478,21 @@ void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
  * \param col The column of the center chunk to load
  */
 void load_chunks(Game *game, int row, int col) {
-    for (int i = -1; i < 2; i++) {
-        for (int j = -1; j < 2; j++) {
-            Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
-            load_chunk(chunk, row + i, col + j);
-            for (int row_ = 0; row_ < CHUNK_HEIGHT; row_++) {
-                for (int col_ = 0; col_ < CHUNK_WIDTH; col_++) {
-                    game->grid[(i+1)*CHUNK_HEIGHT + row_][(j+1)*CHUNK_WIDTH + col_] = chunk[row_][col_];
-                }
-            }
+    Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            load_chunk(chunks[row][col], row, col);
         }
     }
+    load_chunks_to_grid(game->grid, chunks);
+
+    // for (int row = 0; row < MAP_HEIGHT; row++) {
+    //     for (int col = 0; col < MAP_WIDTH; col++) {
+    //         printf("%d ", game->grid[row][col]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 }
 
 /**
@@ -515,7 +507,7 @@ void delete_save() {
         }
         char filename[30];
         sprintf(filename, "saves/%s", entry->d_name);
-        if (remove(filename)) {
+        if (remove(filename) != 0) {
             fprintf(stderr, "Error deleting file %s\n", filename);
             exit(1);
         }

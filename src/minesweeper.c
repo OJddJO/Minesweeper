@@ -86,17 +86,26 @@ static void update(Game *game) {
             int dx = x - game->cx;
             int dy = y - game->cy;
 
-            char filename[30];
-            sprintf(filename, "saves/%d.%d.msav", y, x);
-            if (file_exists(filename)) { //does not work: the centered chunk can be saved without the surrounding ones being saved
+            bool load = true;
+            for (int i = -1; i < 2; i++) {
+                for (int j = -1; j < 2; j++) {
+                    char filename[30];
+                    sprintf(filename, "saves/%d.%d.msav", y+i, x+j);
+                    if (!file_exists(filename)) {
+                        load = false;
+                        break;
+                    }
+                }
+            }
+            if (!load) {
                 shift_game_chunks(game, dx, dy);
                 post_process_shift_chunks(game, dx, dy);
             } else {
                 load_chunks(game, y, x);
             }
             create_tiles(game);
-            game->cy = y;
             game->cx = x;
+            game->cy = y;
         }
         manual_update();
     }
