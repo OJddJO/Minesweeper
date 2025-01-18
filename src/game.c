@@ -491,13 +491,13 @@ void load_chunks(Game *game, int row, int col) {
     }
     load_chunks_to_grid(game->grid, chunks);
 
-    for (int row = 0; row < MAP_HEIGHT; row++) {
-        for (int col = 0; col < MAP_WIDTH; col++) {
-            printf("%d ", game->grid[row][col]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+    // for (int row = 0; row < MAP_HEIGHT; row++) {
+    //     for (int col = 0; col < MAP_WIDTH; col++) {
+    //         printf("%d ", game->grid[row][col]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 }
 
 /**

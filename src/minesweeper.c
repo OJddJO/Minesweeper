@@ -81,6 +81,7 @@ static void update(Game *game) {
         }
         int x, y;
         calc_current_centered_chunk(game, &x, &y);
+        printf("Centered chunk: %d %d\n", x, y);
         if (x != game->cx || y != game->cy) { // If the centered chunk has changed
             int dx = x - game->cx;
             int dy = y - game->cy;
