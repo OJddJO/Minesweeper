@@ -82,8 +82,8 @@ void init_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
  * \param chunks The chunks to load
  */
 void load_chunks_to_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH], Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH]) {
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
+    for (int i = 0; i < 3; i++) { // row
+        for (int j = 0; j < 3; j++) { // col
             for (int row = 0; row < CHUNK_HEIGHT; row++) {
                 for (int col = 0; col < CHUNK_WIDTH; col++) {
                     grid[i*CHUNK_HEIGHT + row][j*CHUNK_WIDTH + col] = chunks[i][j][row][col];
@@ -253,14 +253,14 @@ void reveal_tile(Game *game, int row, int col) {
  * \param game The game to reveal the bombs in
  */
 void reveal_bombs(Game *game, int row, int col) {
-    for (int row_ = 0; row_ < MAP_HEIGHT; row_++) {
-        for (int col_ = 0; col_ < MAP_WIDTH; col_++) {
+    for (int i = 0; i < MAP_HEIGHT; i++) { // row
+        for (int j = 0; j < MAP_WIDTH; j++) { // col
             char name[10];
-            sprintf(name, "%d_%d", row_, col_);
+            sprintf(name, "%d_%d", i, j);
             Object *obj = get_object_by_name(name);
             Uint8 value, state;
-            get_tile_info(game->grid[row_][col_], &value, &state);
-            if ((row_ == row && col_ == col) || state == REVEALED) {
+            get_tile_info(game->grid[i][j], &value, &state);
+            if ((i == row && j == col) || state == REVEALED) {
                 continue;
             }
             if (state == FLAGGED && value == 9) {
@@ -340,9 +340,6 @@ void shift_game_chunks(Game *game, int dx, int dy) {
             game->grid[row][col] = result[row][col];
         }
     }
-
-    game->vx -= dx * CHUNK_WIDTH * SQUARE_SIZE;
-    game->vy -= dy * CHUNK_HEIGHT * SQUARE_SIZE;
 }
 
 /**
@@ -379,14 +376,23 @@ void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int ro
  */
 void add_chunk_to_game(Game *game, int row, int col) {
     Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
-    gen_chunk(chunk);
-    for (int row_ = 0; row_ < CHUNK_HEIGHT; row_++) {
-        for (int col_ = 0; col_ < CHUNK_WIDTH; col_++) {
-            bool is_border = row_ == 0 || row_ == CHUNK_WIDTH-1 || col_ == 0 || col_ == CHUNK_HEIGHT-1;
-            if (is_border && chunk[row_][col_] == 9) {
-                check_mine_valid(game, chunk, row_, col_, row, col);
+    char filename[30];
+    sprintf(filename, "saves/%d.%d.msav", game->cy + row - 1, game->cx + col - 1);
+    bool exists = file_exists(filename);
+    if (exists) {
+        load_chunk(chunk, game->cy + row - 1, game->cx + col - 1);
+    } else {
+        gen_chunk(chunk);
+    }
+    for (int i = 0; i < CHUNK_HEIGHT; i++) { // row
+        for (int j = 0; j < CHUNK_WIDTH; j++) { // col
+            if (!exists) {
+                bool is_border = i == 0 || i == CHUNK_WIDTH-1 || j == 0 || j == CHUNK_HEIGHT-1;
+                if (is_border && chunk[i][j] == 9) {
+                    check_mine_valid(game, chunk, i, j, row, col);
+                }
             }
-            game->grid[row*CHUNK_HEIGHT + row_][col*CHUNK_WIDTH + col_] = chunk[row_][col_];
+            game->grid[row*CHUNK_HEIGHT + i][col*CHUNK_WIDTH + j] = chunk[i][j];
         }
     }
 }
@@ -433,8 +439,8 @@ void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
  * \param game The game to save the chunks from
  */
 void save_chunks(Game *game) {
-    for (int crow = game->cy - 1; crow < game->cy + 2; crow++) { // iter through row
-        for (int ccol = game->cx - 1; ccol < game->cx + 2; ccol++) { // iter through col
+    for (int crow = game->cy - 1; crow < game->cy + 2; crow++) { // iter through chunk row
+        for (int ccol = game->cx - 1; ccol < game->cx + 2; ccol++) { // iter through chunk col
             Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
             for (int row = 0; row < CHUNK_HEIGHT; row++) {
                 for (int col = 0; col < CHUNK_WIDTH; col++) {
@@ -455,7 +461,6 @@ void save_chunks(Game *game) {
 void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
     char filename[30];
     sprintf(filename, "saves/%d.%d.msav", row, col);
-    printf("%s\n", filename);
     FILE *file = fopen(filename, "rb");
 
     if (file == NULL) {
@@ -479,20 +484,20 @@ void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
  */
 void load_chunks(Game *game, int row, int col) {
     Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
-    for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 3; col++) {
-            load_chunk(chunks[row][col], row, col);
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            load_chunk(chunks[i+1][j+1], row+i, col+j);
         }
     }
     load_chunks_to_grid(game->grid, chunks);
 
-    // for (int row = 0; row < MAP_HEIGHT; row++) {
-    //     for (int col = 0; col < MAP_WIDTH; col++) {
-    //         printf("%d ", game->grid[row][col]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
+    for (int row = 0; row < MAP_HEIGHT; row++) {
+        for (int col = 0; col < MAP_WIDTH; col++) {
+            printf("%d ", game->grid[row][col]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 /**

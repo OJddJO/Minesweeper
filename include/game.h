@@ -13,7 +13,7 @@
 
 #define SQUARE_SIZE 30
 
-#define BORDER_SIZE 1.5
+#define BORDER_SIZE 10.5
 
 #define WIN_W (int)(CHUNK_WIDTH + BORDER_SIZE*2) * SQUARE_SIZE
 #define WIN_H (int)(CHUNK_HEIGHT + BORDER_SIZE*2) * SQUARE_SIZE
@@ -44,7 +44,7 @@ typedef struct _Game {
     bool space_pressed; // Space pressed to move the grid
     int mx, my; // Mouse position
     int vx, vy; // Viewport position (NW corner)
-    int cx, cy; // CENTER chunk coordinates
+    int cx, cy; // NW chunk coordinates
 } Game;
 
 inline bool in_grid(int row, int col) {

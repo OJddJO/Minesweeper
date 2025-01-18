@@ -82,32 +82,20 @@ static void update(Game *game) {
         int x, y;
         calc_current_centered_chunk(game, &x, &y);
         if (x != game->cx || y != game->cy) { // If the centered chunk has changed
-            save_chunks(game);
             int dx = x - game->cx;
             int dy = y - game->cy;
-
-            bool load = true;
-            for (int i = -1; i < 2; i++) {
-                for (int j = -1; j < 2; j++) {
-                    char filename[30];
-                    sprintf(filename, "saves/%d.%d.msav", y+i, x+j);
-                    if (!file_exists(filename)) {
-                        load = false;
-                        break;
-                    }
-                }
-            }
-            if (!load) {
-                shift_game_chunks(game, dx, dy);
-                post_process_shift_chunks(game, dx, dy);
-            } else {
-                load_chunks(game, y, x);
-            }
-            create_tiles(game);
             game->cx = x;
             game->cy = y;
+
+            shift_game_chunks(game, dx, dy);
+            post_process_shift_chunks(game, dx, dy);
+
+            game->vx -= dx * CHUNK_WIDTH * SQUARE_SIZE;
+            game->vy -= dy * CHUNK_HEIGHT * SQUARE_SIZE;
+            create_tiles(game);
         }
         manual_update();
+        save_chunks(game);
     }
     get_mouse_position(&game->mx, &game->my);
 }
@@ -124,8 +112,8 @@ static void handle_input(SDL_Event event, Game *game) {
             if (game->game_over) {
                 delete_save();
                 init_game(game);
-                update = true;
-                break;
+                manual_update();
+                return;
             }
             int x, y;
             get_mouse_position(&x, &y);
