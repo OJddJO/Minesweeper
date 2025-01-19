@@ -81,12 +81,13 @@ static void update(Game *game) {
         }
         int x, y;
         calc_current_centered_chunk(game, &x, &y);
-        printf("Centered chunk: %d %d\n", x, y);
         if (x != game->cx || y != game->cy) { // If the centered chunk has changed
             int dx = x - game->cx;
             int dy = y - game->cy;
+            save_chunks(game);
             game->cx = x;
             game->cy = y;
+            printf("Centered chunk: %d %d, dx dy: %d %d\n", x, y, dx, dy);
 
             shift_game_chunks(game, dx, dy);
             post_process_shift_chunks(game, dx, dy);
@@ -96,7 +97,6 @@ static void update(Game *game) {
             create_tiles(game);
         }
         manual_update();
-        save_chunks(game);
     }
     get_mouse_position(&game->mx, &game->my);
 }
@@ -162,9 +162,6 @@ static void handle_input(SDL_Event event, Game *game) {
             break;
     }
     if (update) {
-        if (!game->game_over) {
-            save_chunks(game);
-        }
         manual_update();
     }
 }
