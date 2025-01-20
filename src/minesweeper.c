@@ -84,10 +84,10 @@ static void update(Game *game) {
         if (x != game->cx || y != game->cy) { // If the centered chunk has changed
             int dx = x - game->cx;
             int dy = y - game->cy;
+            printf("Centered chunk: %d %d -> %d %d, dx dy: %d %d\n", game->cx, game->cy, x, y, dx, dy);
             save_chunks(game);
             game->cx = x;
             game->cy = y;
-            printf("Centered chunk: %d %d, dx dy: %d %d\n", x, y, dx, dy);
 
             shift_game_chunks(game, dx, dy);
             post_process_shift_chunks(game, dx, dy);

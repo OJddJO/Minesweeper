@@ -146,7 +146,7 @@ void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
         } else {
             chunk[row][col] = 9;
         }
-    }
+    }   
 }
 
 /**
@@ -485,7 +485,7 @@ void load_chunks(Game *game, int row, int col) {
     Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
-            load_chunk(chunks[i+1][j+1], row+i, col+j);
+            load_chunk(chunks[i+row+1][j+col+1], row+i, col+j);
         }
     }
     load_chunks_to_grid(game->grid, chunks);

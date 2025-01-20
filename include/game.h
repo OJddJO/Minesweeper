@@ -39,6 +39,7 @@ enum _textures {
 
 typedef struct _Game {
     Uint8 grid[MAP_HEIGHT][MAP_WIDTH]; // Minesweeper grid
+    // Uint8 chunks[5][5][CHUNK_HEIGHT][CHUNK_WIDTH]; // Minesweeper chunks (preload 5x5)
     Uint32 score;
     bool game_over; // Game over
     bool space_pressed; // Space pressed to move the grid
