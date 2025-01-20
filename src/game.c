@@ -370,21 +370,23 @@ void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int ro
  * Adds a chunk to a running game
  * \param game The game to add the chunk to
  * \param chunk The chunk to add
- * \param row The row of the chunk
- * \param col The column of the chunk
+ * \param row The row where the chunk should be added in the game grid
+ * \param col The column where the chunk should be added in the game grid
+ * \param crow The row of the chunk to load
+ * \param ccol The column of the chunk to load
  */
-void add_chunk_to_game(Game *game, int row, int col) {
+void add_chunk_to_game(Game *game, int row, int col, int crow, int ccol) {
     Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
     char filename[30];
     sprintf(filename, "saves/%d.%d.msav", game->cy + row - 1, game->cx + col - 1);
     bool exists = file_exists(filename);
     if (exists) {
-        load_chunk(chunk, game->cy + row - 1, game->cx + col - 1);
+        load_chunk(chunk, crow, ccol);
     } else {
         gen_chunk(chunk);
     }
-    for (int i = 0; i < CHUNK_HEIGHT; i++) { // row
-        for (int j = 0; j < CHUNK_WIDTH; j++) { // col
+    for (int i = 0; i < CHUNK_HEIGHT; i++) {
+        for (int j = 0; j < CHUNK_WIDTH; j++) {
             if (!exists) {
                 bool is_border = i == 0 || i == CHUNK_WIDTH-1 || j == 0 || j == CHUNK_HEIGHT-1;
                 if (is_border && chunk[i][j] == 9) {
@@ -406,13 +408,17 @@ void post_process_shift_chunks(Game *game, int dx, int dy) {
     if (dx != 0) {
         int col = dx == 1 ? 2 : 0;
         for (int row = 0; row < 3; row++) {
-            add_chunk_to_game(game, row, col);
+            int crow = game->cy + row - 1;
+            int ccol = game->cx + col - 1;
+            add_chunk_to_game(game, row, col, crow, ccol);
         }
     }
     if (dy != 0) {
         int row = dy == 1 ? 2 : 0;
         for (int col = 0; col < 3; col++) {
-            add_chunk_to_game(game, row, col);
+            int crow = game->cy + row - 1;
+            int ccol = game->cx + col - 1;
+            add_chunk_to_game(game, row, col, crow, ccol);
         }
     }
 
@@ -438,15 +444,15 @@ void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
  * \param game The game to save the chunks from
  */
 void save_chunks(Game *game) {
-    for (int crow = game->cy - 1; crow < game->cy + 2; crow++) { // iter through chunk row
-        for (int ccol = game->cx - 1; ccol < game->cx + 2; ccol++) { // iter through chunk col
+    for (int crow = 0; crow < 3; crow++) { // iter through chunk row
+        for (int ccol = 0; ccol < 3; ccol++) { // iter through chunk col
             Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
             for (int row = 0; row < CHUNK_HEIGHT; row++) {
                 for (int col = 0; col < CHUNK_WIDTH; col++) {
                     chunk[row][col] = game->grid[crow*CHUNK_HEIGHT + row][ccol*CHUNK_WIDTH + col];
                 }
             }
-            save_chunk(chunk, crow, ccol);
+            save_chunk(chunk, crow + game->cy - 1, ccol + game->cx - 1);
         }
     }
 }
@@ -485,7 +491,7 @@ void load_chunks(Game *game, int row, int col) {
     Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
-            load_chunk(chunks[i+row+1][j+col+1], row+i, col+j);
+            load_chunk(chunks[i+1][j+1], row+i, col+j);
         }
     }
     load_chunks_to_grid(game->grid, chunks);

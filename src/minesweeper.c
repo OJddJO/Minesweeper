@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
     init_game(game);
 
     engine_run(update, draw, handle_input, game);
+    save_chunks(game);
 
     destroy_all_objects();
     destroy_all_textures();
@@ -84,7 +85,6 @@ static void update(Game *game) {
         if (x != game->cx || y != game->cy) { // If the centered chunk has changed
             int dx = x - game->cx;
             int dy = y - game->cy;
-            printf("Centered chunk: %d %d -> %d %d, dx dy: %d %d\n", game->cx, game->cy, x, y, dx, dy);
             save_chunks(game);
             game->cx = x;
             game->cy = y;

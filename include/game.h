@@ -13,7 +13,7 @@
 
 #define SQUARE_SIZE 30
 
-#define BORDER_SIZE 10.5
+#define BORDER_SIZE 4.5
 
 #define WIN_W (int)(CHUNK_WIDTH + BORDER_SIZE*2) * SQUARE_SIZE
 #define WIN_H (int)(CHUNK_HEIGHT + BORDER_SIZE*2) * SQUARE_SIZE
@@ -75,7 +75,7 @@ void reveal_number(Game *game, int row, int col);
 void calc_current_centered_chunk(Game *game, int *x, int *y);
 void shift_game_chunks(Game *game, int dx, int dy);
 void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col, int crow, int ccol);
-void add_chunk_to_game(Game *game, int row, int col);
+void add_chunk_to_game(Game *game, int row, int col, int crow, int ccol);
 void post_process_shift_chunks(Game *game, int dx, int dy);
 
 void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col);
