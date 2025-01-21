@@ -111,7 +111,6 @@ static void handle_input(SDL_Event event, Game *game) {
     switch (event.type) {
         case (SDL_MOUSEBUTTONDOWN):
             if (game->game_over) {
-                delete_save();
                 init_game(game);
                 manual_update();
                 return;
@@ -125,28 +124,22 @@ static void handle_input(SDL_Event event, Game *game) {
             switch (event.button.button) {
                 case (SDL_BUTTON_LEFT):
                     if (state == FLAGGED) break;
-                    if (in_grid(row, col)) {
-                        if (state == HIDDEN) reveal_tile(game, row, col);
-                        else if (value >= 1 && value <= 8) {
-                            reveal_number(game, row, col);
-                        }
-                        update = true;
-                    }
+                    else if (state == HIDDEN) reveal_tile(game, row, col);
+                    else if (value >= 1 && value <= 8) reveal_number(game, row, col);
+                    update = true;
                     break;
                 case (SDL_BUTTON_RIGHT):
-                    if (in_grid(row, col)) {
-                        char name[10];
-                        sprintf(name, "%d_%d", row, col);
-                        Object *obj = get_object_by_name(name);
-                        if (state == HIDDEN) {
-                            store_tile_state(&game->grid[row][col], FLAGGED);
-                            change_object_texture(obj, get_texture(T_FLAG));
-                        } else if (state == FLAGGED) {
-                            store_tile_state(&game->grid[row][col], HIDDEN);
-                            change_object_texture(obj, get_texture(T_HIDDEN));
-                        }
-                        update = true;
+                    char name[10];
+                    sprintf(name, "%d_%d", row, col);
+                    Object *obj = get_object_by_name(name);
+                    if (state == HIDDEN) {
+                        store_tile_state(&game->grid[row][col], FLAGGED);
+                        change_object_texture(obj, get_texture(T_FLAG));
+                    } else if (state == FLAGGED) {
+                        store_tile_state(&game->grid[row][col], HIDDEN);
+                        change_object_texture(obj, get_texture(T_HIDDEN));
                     }
+                    update = true;
                     break;
             }
             break;

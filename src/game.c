@@ -227,6 +227,7 @@ void reveal_tile(Game *game, int row, int col) {
     if (value == 9) {
         change_object_texture(obj, get_texture(T_WRONG));
         reveal_bombs(game, row, col);
+        delete_save();
         game->game_over = true;
     } else {
         game->score++;
