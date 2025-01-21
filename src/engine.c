@@ -110,8 +110,8 @@ void engine_quit() {
 /**
  * Runs the engine
  * \param update The update function. Should take a `Game *` as argument and return `void`
- * \param draw The draw function. Should takes a `Game *` as argument and returns `void`.
- * \param event_handler The event handler function. Should takes a `SDL_Event` and a `Game *` as arguments and returns `void`.
+ * \param draw The draw function. Should takes a `Game *` as argument and returns `void`
+ * \param event_handler The event handler function. Should takes a `SDL_Event` and a `Game *` as arguments and returns `void`
  * \param data The `Game *` to pass to the functions (update, draw, event_handler)
  * \warning The engine runs in an infinite loop until the window is closed
  * \note The order of execution is as follows: Event handling, Update, (Clear screen), Draw
