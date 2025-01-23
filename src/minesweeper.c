@@ -10,7 +10,7 @@ static void update(Game *game);
  * Main function
  */
 int main(int argc, char *argv[]) {
-    engine_init("Minesweeper", WIN_W, WIN_H, 60);
+    engine_init("Minesweeper", WIN_W, WIN_H, FPS);
     set_manual_update(true);
     set_background_color((SDL_Color){191, 191, 191, 255});
     set_window_icon("assets/icon.png");
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     init_game(game);
 
     engine_run(update, draw, handle_input, game);
-    save_chunks(game);
+    save_game(game);
 
     destroy_all_objects();
     destroy_all_textures();
@@ -54,6 +54,7 @@ static void draw(Game *game) {
     char title[50];
     sprintf(title, "Minesweeper - %s - %s", game->game_over ? "Game Over" : "Playing", score);
     set_window_title(title);
+    save_anim(game);
 }
 
 /**
@@ -85,7 +86,7 @@ static void update(Game *game) {
         if (x != game->cx || y != game->cy) { // If the centered chunk has changed
             int dx = x - game->cx;
             int dy = y - game->cy;
-            save_chunks(game);
+            save_game(game);
             game->cx = x;
             game->cy = y;
 
@@ -98,7 +99,10 @@ static void update(Game *game) {
         }
         manual_update();
     }
+
+    check_upd_save_anim(game);
     get_mouse_position(&game->mx, &game->my);
+    game->frame_count++;
 }
 
 /**
@@ -144,19 +148,32 @@ static void handle_input(SDL_Event event, Game *game) {
             }
             break;
         case (SDL_KEYDOWN):
-            if (event.key.keysym.sym == SDLK_SPACE) {
-                game->space_pressed = true;
+            switch (event.key.keysym.sym) {
+                case (SDLK_SPACE):
+                    game->space_pressed = true;
+                    break;
             }
             break;
         case (SDL_KEYUP):
-            if (event.key.keysym.sym == SDLK_SPACE) {
-                game->space_pressed = false;
+            switch (event.key.keysym.sym) {
+                case (SDLK_SPACE):
+                    game->space_pressed = false;
+                    break;
+                case (SDLK_s):
+                    if (!game->game_over) {
+                        save_game(game);
+                        game->save_frame = game->frame_count;
+                    }
+                    break;
+                case (SDLK_r):
+                    delete_save();
+                    init_game(game);
+                    update = true;
+                    break;
             }
             break;
     }
-    if (update) {
-        manual_update();
-    }
+    if (update) manual_update();
 }
 
 /**
@@ -182,4 +199,6 @@ static void init_assets() {
     get_tile_as_texture("6", tilemap, 1, 1);
     get_tile_as_texture("7", tilemap, 1, 2);
     get_tile_as_texture("8", tilemap, 1, 3);
+
+    destroy_tilemap(tilemap);
 }

@@ -54,6 +54,8 @@ void init_game(Game *game) {
     game->score = 0;
     game->game_over = false;
     game->space_pressed = false;
+    game->frame_count = 0;
+    game->save_frame = 0;
     game->mx = 0;
     game->my = 0;
     game->vx = (CHUNK_HEIGHT - BORDER_SIZE) * SQUARE_SIZE;
@@ -187,7 +189,7 @@ void create_tiles(Game *game) {
  */
 void start_game(Game *game, int row, int col) {
     init_grid(game->grid);
-    if (!file_exists("saves/1.1.msav")) {
+    if (!file_exists("saves/data.msav")) {
         Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -207,7 +209,8 @@ void start_game(Game *game, int row, int col) {
         reveal_tile(game, row, col);
         save_chunks(game);
     } else {
-        load_chunks(game, 1, 1); // start chunk is 1, 1
+        load_data(game);
+        load_chunks(game, game->cx, game->cy);
         create_tiles(game);
     }
 }
@@ -427,6 +430,44 @@ void post_process_shift_chunks(Game *game, int dx, int dy) {
 }
 
 /**
+ * Saves game datas
+ * \param game The game to save
+ */
+void save_data(Game *game) {
+    FILE *file = fopen("saves/data.msav", "wb");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file saves/data.msav\n");
+        exit(1);
+    }
+    fwrite(&game->score, sizeof(Uint32), 1, file);
+    fwrite(&game->game_over, sizeof(bool), 1, file);
+    fwrite(&game->vx, sizeof(int), 1, file);
+    fwrite(&game->vy, sizeof(int), 1, file);
+    fwrite(&game->cy, sizeof(int), 1, file);
+    fwrite(&game->cx, sizeof(int), 1, file);
+    fclose(file);
+}
+
+/**
+ * Loads game datas
+ * \param game The game to load
+ */
+void load_data(Game *game) {
+    FILE *file = fopen("saves/data.msav", "rb");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file saves/data.msav\n");
+        exit(1);
+    }
+    fread(&game->score, sizeof(Uint32), 1, file);
+    fread(&game->game_over, sizeof(bool), 1, file);
+    fread(&game->vx, sizeof(int), 1, file);
+    fread(&game->vy, sizeof(int), 1, file);
+    fread(&game->cx, sizeof(int), 1, file);
+    fread(&game->cy, sizeof(int), 1, file);
+    fclose(file);
+}
+
+/**
  * Save a single chunk in a file
  * \param chunk The chunk to save
  * \param row The row of the chunk
@@ -525,6 +566,7 @@ void delete_save() {
     }
 }
 
+
 /**
  * Checks if a file exists
  * \param filename The name of the file to check
@@ -536,4 +578,38 @@ bool file_exists(const char *filename) {
         return true;
     }
     return false;
+}
+
+/**
+ * Checks if the game saved animation need to be updated
+ * \param game The game to check the animation for
+ */
+void check_upd_save_anim(Game *game) {
+    int df = game->frame_count - game->save_frame;
+    if (df > SAVE_ANIM_FRAMES) {
+        return;
+    }
+    if (df % 2 == 0 && df <= SAVE_ANIM_FRAMES) {
+        manual_update();
+    }
+}
+
+/**
+ * Renders the frame of the save animation
+ * \param game The game to render the frame for
+ */
+void save_anim(Game *game) {
+    int df = game->frame_count - game->save_frame;
+    if (df > SAVE_ANIM_FRAMES) {
+        return;
+    }
+    if (df < SAVE_ANIM_FRAMES/2) { // fade in
+        int alpha = 255 * df / (SAVE_ANIM_FRAMES/2);
+        draw_text("font", "Game saved", 11, 11, (Color){0, 0, 0, alpha}, NW);
+        draw_text("font", "Game saved", 10, 10, (Color){255, 255, 255, alpha}, NW);
+    } else { // fade out
+        int alpha = 255 - 255 * (df - SAVE_ANIM_FRAMES/2) / (SAVE_ANIM_FRAMES/2);
+        draw_text("font", "Game saved", 11, 11, (Color){0, 0, 0, alpha}, NW);
+        draw_text("font", "Game saved", 10, 10, (Color){255, 255, 255, alpha}, NW);
+    }
 }

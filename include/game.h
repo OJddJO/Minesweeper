@@ -5,6 +5,8 @@
 #include <windows.h>
 #include <dirent.h>
 
+#define FPS 60
+
 #define CHUNK_WIDTH 10
 #define CHUNK_HEIGHT 10
 
@@ -21,6 +23,8 @@
 #define NUMBER_TILE_OFFSET 6
 
 #define MINES CHUNK_WIDTH*CHUNK_HEIGHT/5
+
+#define SAVE_ANIM_FRAMES 100
 
 enum _state {
     HIDDEN = 0,
@@ -40,6 +44,8 @@ enum _textures {
 typedef struct _Game {
     Uint8 grid[MAP_HEIGHT][MAP_WIDTH]; // Minesweeper grid
     Uint32 score;
+    Uint32 frame_count;
+    Uint32 save_frame; // Frame count when saved
     bool game_over; // Game over
     bool space_pressed; // Space pressed to move the grid
     int mx, my; // Mouse position
@@ -77,12 +83,22 @@ void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int ro
 void add_chunk_to_game(Game *game, int row, int col, int crow, int ccol);
 void post_process_shift_chunks(Game *game, int dx, int dy);
 
+void save_data(Game *game);
+void load_data(Game *game);
 void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col);
 void save_chunks(Game *game);
 void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col);
 void load_chunks(Game *game, int row, int col);
 void delete_save();
 
+inline void save_game(Game *game) {
+    save_data(game);
+    save_chunks(game);
+}
+
 bool file_exists(const char *filename);
+
+void check_upd_save_anim(Game *game);
+void save_anim(Game *game);
 
 #endif // __GAME_H_

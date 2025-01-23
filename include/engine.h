@@ -31,7 +31,7 @@
 
 // Structure prototypes
 
-// Game structure to contain all the game data
+// Game structure prototype to contain all datas
 typedef struct _Game Game;
 
 // Engine structures
@@ -303,6 +303,7 @@ void get_hovered_objects_ids(Uint32 ids[], int size);
 
 void load_font(char *filename, int size, char *name);
 void draw_text(char *font_name, char *text, int x, int y, Color color, Anchor anchor);
+Uint32 create_text_as_texture(char *font_name, char *text, Color color, char *texture_name);
 void close_font(char *name);
 void close_all_fonts();
 
