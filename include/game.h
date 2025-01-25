@@ -57,11 +57,15 @@ inline bool in_grid(int row, int col) {
     return row >= 0 && row < MAP_HEIGHT && col >= 0 && col < MAP_WIDTH;
 }
 
+// Tile functions
+
 void get_tile_info(Uint8 tile, Uint8 *value, Uint8 *state);
 Uint8 get_tile_value(Uint8 tile);
 Uint8 get_tile_state(Uint8 tile);
 void store_tile_value(Uint8 *tile, Uint8 value);
 void store_tile_state(Uint8 *tile, Uint8 state);
+
+// Game init functions
 
 void init_game(Game *game);
 void init_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]);
@@ -73,15 +77,21 @@ void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]);
 void create_tiles(Game *game);
 void start_game(Game *game, int row, int col);
 
+// Game update functions
+
 void reveal_tile(Game *game, int row, int col);
 void reveal_bombs(Game *game, int row, int col);
 void reveal_number(Game *game, int row, int col);
+
+// Viewport/chunk functions
 
 void calc_current_centered_chunk(Game *game, int *x, int *y);
 void shift_game_chunks(Game *game, int dx, int dy);
 void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col, int crow, int ccol);
 void add_chunk_to_game(Game *game, int row, int col, int crow, int ccol);
 void post_process_shift_chunks(Game *game, int dx, int dy);
+
+// Save/load functions
 
 void save_data(Game *game);
 void load_data(Game *game);
@@ -97,6 +107,8 @@ inline void save_game(Game *game) {
 }
 
 bool file_exists(const char *filename);
+
+// Save animation functions
 
 void check_upd_save_anim(Game *game);
 void save_anim(Game *game);
