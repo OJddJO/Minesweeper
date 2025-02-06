@@ -275,6 +275,10 @@ void draw_rect_thick(int x1, int y1, int x2, int y2, Color color, int thickness)
 void draw_circle_thick(int x, int y, int radius, Color color, int thickness);
 void draw_ellipse_thick(int x, int y, int rx, int ry, Color color, int thickness);
 
+void fill_rect(int x1, int y1, int x2, int y2, Color color);
+void fill_circle(int x, int y, int radius, Color color);
+void fill_ellipse(int x, int y, int rx, int ry, Color color);
+
 void draw_geometry(Texture *texture, int x, int y);
 Uint32 create_line(char *name, int x1, int y1, int x2, int y2, Color color);
 Uint32 create_rect(char *name, int x1, int y1, int x2, int y2, Color color);

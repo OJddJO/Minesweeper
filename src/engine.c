@@ -1183,6 +1183,46 @@ void draw_ellipse_thick(int x, int y, int rx, int ry, Color color, int thickness
 }
 
 /**
+ * Fills a rectangle
+ * \param x1 The x position of the point at the top-left corner of the rectangle
+ * \param y1 The y position of the point at the top-left corner of the rectangle
+ * \param x2 The x position of the point at the bottom-right corner of the rectangle
+ * \param y2 The y position of the point at the bottom-right corner of the rectangle
+ */
+void fill_rect(int x1, int y1, int x2, int y2, Color color) {
+    _assert_engine_init();
+    boxRGBA(_engine->renderer, x1, y1, x2, y2, color.r, color.g, color.b, color.a);
+    SDL_SetRenderDrawColor(_engine->renderer, _color.r, _color.g, _color.b, _color.a);
+}
+
+/**
+ * Fills a circle
+ * \param x The x position of the circle
+ * \param y The y position of the circle
+ * \param radius The radius of the circle
+ * \param color The color of the circle
+ */
+void fill_circle(int x, int y, int radius, Color color) {
+    _assert_engine_init();
+    filledCircleRGBA(_engine->renderer, x, y, radius, color.r, color.g, color.b, color.a);
+    SDL_SetRenderDrawColor(_engine->renderer, _color.r, _color.g, _color.b, _color.a);
+}
+
+/**
+ * Fills an ellipse
+ * \param x The x position of the ellipse
+ * \param y The y position of the ellipse
+ * \param rx The x radius of the ellipse
+ * \param ry The y radius of the ellipse
+ * \param color The color of the ellipse
+ */
+void fill_ellipse(int x, int y, int rx, int ry, Color color) {
+    _assert_engine_init();
+    filledEllipseRGBA(_engine->renderer, x, y, rx, ry, color.r, color.g, color.b, color.a);
+    SDL_SetRenderDrawColor(_engine->renderer, _color.r, _color.g, _color.b, _color.a);
+}
+
+/**
  * Draws geometry from a texture
  * \param texture The texture to draw
  * \param x The x position to draw the texture

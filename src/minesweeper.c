@@ -54,7 +54,7 @@ static void draw(Game *game) {
     char title[50];
     sprintf(title, "Minesweeper - %s - %s", game->game_over ? "Game Over" : "Playing", score);
     set_window_title(title);
-    save_anim(game);
+    anim(game);
 }
 
 /**
@@ -100,7 +100,7 @@ static void update(Game *game) {
         manual_update();
     }
 
-    check_upd_save_anim(game);
+    check_upd_anim(game);
     get_mouse_position(&game->mx, &game->my);
     game->frame_count++;
 }
@@ -115,43 +115,51 @@ static void handle_input(SDL_Event event, Game *game) {
     switch (event.type) {
         case (SDL_MOUSEBUTTONDOWN):
             if (game->game_over) {
+                delete_save();
                 init_game(game);
                 manual_update();
                 return;
             }
-            int x, y;
-            get_mouse_position(&x, &y);
-            int row = (y + game->vy) / SQUARE_SIZE;
-            int col = (x + game->vx) / SQUARE_SIZE;
-            Uint8 value, state;
-            get_tile_info(game->grid[row][col], &value, &state);
-            switch (event.button.button) {
-                case (SDL_BUTTON_LEFT):
-                    if (state == FLAGGED) break;
-                    else if (state == HIDDEN) reveal_tile(game, row, col);
-                    else if (value >= 1 && value <= 8) reveal_number(game, row, col);
-                    update = true;
-                    break;
-                case (SDL_BUTTON_RIGHT):
-                    char name[10];
-                    sprintf(name, "%d_%d", row, col);
-                    Object *obj = get_object_by_name(name);
-                    if (state == HIDDEN) {
-                        store_tile_state(&game->grid[row][col], FLAGGED);
-                        change_object_texture(obj, get_texture(T_FLAG));
-                    } else if (state == FLAGGED) {
-                        store_tile_state(&game->grid[row][col], HIDDEN);
-                        change_object_texture(obj, get_texture(T_HIDDEN));
-                    }
-                    update = true;
-                    break;
+            if (game->menu) {
+
+            } else {
+
+                int x, y;
+                get_mouse_position(&x, &y);
+                int row = (y + game->vy) / SQUARE_SIZE;
+                int col = (x + game->vx) / SQUARE_SIZE;
+                Uint8 value, state;
+                get_tile_info(game->grid[row][col], &value, &state);
+                switch (event.button.button) {
+                    case (SDL_BUTTON_LEFT):
+                        if (state == FLAGGED) break;
+                        else if (state == HIDDEN) reveal_tile(game, row, col);
+                        else if (value >= 1 && value <= 8) reveal_number(game, row, col);
+                        update = true;
+                        break;
+                    case (SDL_BUTTON_RIGHT):
+                        char name[10];
+                        sprintf(name, "%d_%d", row, col);
+                        Object *obj = get_object_by_name(name);
+                        if (state == HIDDEN) {
+                            store_tile_state(&game->grid[row][col], FLAGGED);
+                            change_object_texture(obj, get_texture(T_FLAG));
+                        } else if (state == FLAGGED) {
+                            store_tile_state(&game->grid[row][col], HIDDEN);
+                            change_object_texture(obj, get_texture(T_HIDDEN));
+                        }
+                        update = true;
+                        break;
+                }
             }
             break;
         case (SDL_KEYDOWN):
-            switch (event.key.keysym.sym) {
-                case (SDLK_SPACE):
-                    game->space_pressed = true;
-                    break;
+            if (game->menu) {
+                switch (event.key.keysym.sym) {
+                    case (SDLK_SPACE):
+                        game->space_pressed = true;
+                        break;
+                }
             }
             break;
         case (SDL_KEYUP):
@@ -160,15 +168,25 @@ static void handle_input(SDL_Event event, Game *game) {
                     game->space_pressed = false;
                     break;
                 case (SDLK_s):
-                    if (!game->game_over) {
-                        save_game(game);
-                        game->save_frame = game->frame_count;
+                    if (game->menu) {
+                    } else {
+                        if (!game->game_over) {
+                            save_game(game);
+                            game->save_frame = game->frame_count;
+                        }
                     }
                     break;
                 case (SDLK_r):
-                    delete_save();
-                    init_game(game);
-                    update = true;
+                    if (game->menu) {
+                    } else {
+                        delete_save();
+                        init_game(game);
+                        update = true;
+                    }
+                    break;
+                case (SDLK_ESCAPE):
+                    game->menu_frame = game->frame_count;
+                    game->menu = !game->menu;
                     break;
             }
             break;

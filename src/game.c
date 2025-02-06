@@ -52,10 +52,11 @@ void store_tile_state(Uint8 *tile, Uint8 state) {
 void init_game(Game *game) {
     init_grid(game->grid);
     game->score = 0;
-    game->game_over = false;
-    game->space_pressed = false;
     game->frame_count = 0;
     game->save_frame = 0;
+    game->menu = false;
+    game->game_over = false;
+    game->space_pressed = false;
     game->mx = 0;
     game->my = 0;
     game->vx = (CHUNK_HEIGHT - BORDER_SIZE) * SQUARE_SIZE;
@@ -230,7 +231,6 @@ void reveal_tile(Game *game, int row, int col) {
     if (value == 9) {
         change_object_texture(obj, get_texture(T_WRONG));
         reveal_bombs(game, row, col);
-        delete_save();
         game->game_over = true;
     } else {
         game->score++;
@@ -612,4 +612,37 @@ void save_anim(Game *game) {
         draw_text("font", "Game saved", 11, 11, (Color){0, 0, 0, alpha}, NW);
         draw_text("font", "Game saved", 10, 10, (Color){255, 255, 255, alpha}, NW);
     }
+}
+
+/**
+ * Checks if the game menu animation need to be updated
+ * \param game The game to check the animation for
+ */
+void check_upd_menu_fade(Game *game) {
+    int df = game->frame_count - game->menu_frame;
+    if (df > MENU_FADE_FRAMES + 1) {
+        return;
+    }
+    if (df % 2 == 0 && df <= MENU_FADE_FRAMES + 1) {
+        manual_update();
+    }
+}
+
+/**
+ * Fade the game menu
+ * \param game The game to fade the menu for
+ */
+void menu_fade(Game *game) {
+    int df = game->frame_count - game->menu_frame;
+    if (df > MENU_FADE_FRAMES) {
+        return;
+    }
+    int alpha;
+    if (game->menu) {
+        alpha = MENU_FADE_MAX_ALPHA * df / MENU_FADE_FRAMES;
+    } else {
+        alpha = MENU_FADE_MAX_ALPHA - MENU_FADE_MAX_ALPHA * df / MENU_FADE_FRAMES;
+    }
+    fill_rect(0, 0, WIN_W, WIN_H, (Color){0, 0, 0, alpha});
+    printf("alpha: %d\n", alpha);
 }

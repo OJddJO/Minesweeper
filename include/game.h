@@ -25,6 +25,9 @@
 #define MINES CHUNK_WIDTH*CHUNK_HEIGHT/5
 
 #define SAVE_ANIM_FRAMES 100
+#define MENU_FADE_FRAMES 60
+
+#define MENU_FADE_MAX_ALPHA 150
 
 enum _state {
     HIDDEN = 0,
@@ -46,6 +49,8 @@ typedef struct _Game {
     Uint32 score;
     Uint32 frame_count;
     Uint32 save_frame; // Frame count when saved
+    Uint32 menu_frame; // Frame count when the anim is called
+    bool menu;
     bool game_over; // Game over
     bool space_pressed; // Space pressed to move the grid
     int mx, my; // Mouse position
@@ -112,5 +117,23 @@ bool file_exists(const char *filename);
 
 void check_upd_save_anim(Game *game);
 void save_anim(Game *game);
+
+// Menu functions
+
+void check_upd_menu_fade(Game *game);
+void menu_fade(Game *game);
+
+inline void check_upd_anim(Game *game) {
+    check_upd_save_anim(game);
+    check_upd_menu_fade(game);
+}
+
+inline void anim(Game *game) {
+    save_anim(game);
+    menu_fade(game);
+
+    if (game->menu && game->frame_count - game->menu_frame > MENU_FADE_FRAMES)
+        fill_rect(0, 0, WIN_W, WIN_H, (SDL_Color){0, 0, 0, MENU_FADE_MAX_ALPHA});
+}
 
 #endif // __GAME_H_
