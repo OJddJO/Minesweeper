@@ -25,7 +25,7 @@
 #define MINES CHUNK_WIDTH*CHUNK_HEIGHT/5
 
 #define SAVE_ANIM_FRAMES 100
-#define MENU_FADE_FRAMES 60
+#define MENU_ALPHA_STEP 10
 
 #define MENU_FADE_MAX_ALPHA 150
 
@@ -49,7 +49,9 @@ typedef struct _Game {
     Uint32 score;
     Uint32 frame_count;
     Uint32 save_frame; // Frame count when saved
-    Uint32 menu_frame; // Frame count when the anim is called
+    short menu_alpha; // Current alpha of the menu fade animation
+    bool update_save_anim; // Update save animation
+    bool update_menu_anim; // Update menu animation
     bool menu;
     bool game_over; // Game over
     bool space_pressed; // Space pressed to move the grid
@@ -129,11 +131,10 @@ inline void check_upd_anim(Game *game) {
 }
 
 inline void anim(Game *game) {
-    save_anim(game);
-    menu_fade(game);
-
-    if (game->menu && game->frame_count - game->menu_frame > MENU_FADE_FRAMES)
-        fill_rect(0, 0, WIN_W, WIN_H, (SDL_Color){0, 0, 0, MENU_FADE_MAX_ALPHA});
+    if (game->update_save_anim) save_anim(game);
+    if (game->update_menu_anim) menu_fade(game);
+    game->update_menu_anim = false;
+    game->update_save_anim = false;
 }
 
-#endif // __GAME_H_
+#endif // __GAME_H__

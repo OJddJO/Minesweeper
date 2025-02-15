@@ -54,7 +54,6 @@ void init_game(Game *game) {
     game->score = 0;
     game->frame_count = 0;
     game->save_frame = 0;
-    game->menu = false;
     game->game_over = false;
     game->space_pressed = false;
     game->mx = 0;
@@ -590,6 +589,7 @@ void check_upd_save_anim(Game *game) {
         return;
     }
     if (df % 2 == 0 && df <= SAVE_ANIM_FRAMES) {
+        game->update_save_anim = true;
         manual_update();
     }
 }
@@ -619,11 +619,8 @@ void save_anim(Game *game) {
  * \param game The game to check the animation for
  */
 void check_upd_menu_fade(Game *game) {
-    int df = game->frame_count - game->menu_frame;
-    if (df > MENU_FADE_FRAMES + 1) {
-        return;
-    }
-    if (df % 2 == 0 && df <= MENU_FADE_FRAMES + 1) {
+    if ((game->menu && game->menu_alpha != 150) || (!game->menu && game->menu_alpha != 0)) {
+        game->update_menu_anim = true;
         manual_update();
     }
 }
@@ -633,16 +630,6 @@ void check_upd_menu_fade(Game *game) {
  * \param game The game to fade the menu for
  */
 void menu_fade(Game *game) {
-    int df = game->frame_count - game->menu_frame;
-    if (df > MENU_FADE_FRAMES) {
-        return;
-    }
-    int alpha;
-    if (game->menu) {
-        alpha = MENU_FADE_MAX_ALPHA * df / MENU_FADE_FRAMES;
-    } else {
-        alpha = MENU_FADE_MAX_ALPHA - MENU_FADE_MAX_ALPHA * df / MENU_FADE_FRAMES;
-    }
-    fill_rect(0, 0, WIN_W, WIN_H, (Color){0, 0, 0, alpha});
-    printf("alpha: %d\n", alpha);
+    game->menu_alpha += (short)(game->menu ? MENU_ALPHA_STEP : -MENU_ALPHA_STEP);
+    fill_rect(0, 0, WIN_W, WIN_H, (Color){0, 0, 0, game->menu_alpha});
 }

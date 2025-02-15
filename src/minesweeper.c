@@ -22,6 +22,8 @@ int main(int argc, char *argv[]) {
     load_font("assets/font.ttf", 20, "font");
 
     Game *game = (Game *)malloc(sizeof(Game));
+    game->menu = false;
+    game->menu_alpha = 0;
     init_game(game);
 
     engine_run(update, draw, handle_input, game);
@@ -63,7 +65,7 @@ static void draw(Game *game) {
  */
 static void update(Game *game) {
     if (game->game_over) return;
-    if (game->space_pressed) {
+    if (game->space_pressed && !game->menu) {
         int dx, dy;
         get_mouse_position(&dx, &dy);
         dx -= game->mx;
@@ -123,7 +125,6 @@ static void handle_input(SDL_Event event, Game *game) {
             if (game->menu) {
 
             } else {
-
                 int x, y;
                 get_mouse_position(&x, &y);
                 int row = (y + game->vy) / SQUARE_SIZE;
@@ -154,7 +155,7 @@ static void handle_input(SDL_Event event, Game *game) {
             }
             break;
         case (SDL_KEYDOWN):
-            if (game->menu) {
+            if (!game->menu) {
                 switch (event.key.keysym.sym) {
                     case (SDLK_SPACE):
                         game->space_pressed = true;
@@ -167,25 +168,22 @@ static void handle_input(SDL_Event event, Game *game) {
                 case (SDLK_SPACE):
                     game->space_pressed = false;
                     break;
-                case (SDLK_s):
-                    if (game->menu) {
-                    } else {
+                case (SDLK_s): // Save
+                    if (!game->menu) {
                         if (!game->game_over) {
                             save_game(game);
                             game->save_frame = game->frame_count;
                         }
                     }
                     break;
-                case (SDLK_r):
-                    if (game->menu) {
-                    } else {
+                case (SDLK_r): // Restart
+                    if (!game->menu) {
                         delete_save();
                         init_game(game);
                         update = true;
                     }
                     break;
                 case (SDLK_ESCAPE):
-                    game->menu_frame = game->frame_count;
                     game->menu = !game->menu;
                     break;
             }
