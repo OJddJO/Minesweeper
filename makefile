@@ -9,9 +9,12 @@ LIB         = -L lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_
 EXTRA       = -Werror -O3
 STATIC      = # for static linking
 
-all: create_dirs link
+all: create_dirs build_resources link
 
 remake: clean all
+
+build_resources:
+	windres src/icon.rc -O coff -o build/icon.res
 
 clean:
 	erase $(subst build/, build\, $(OBJ))
@@ -24,4 +27,4 @@ build/%.o: src/%.c
 	gcc $(INCLUDE) -c src/$*.c -o build/$*.o $(DBG) $(EXTRA)
 
 link: $(OBJ)
-	gcc $(OBJ) -o $(EXE) $(LIB) $(STATIC) $(DBG) $(EXTRA)
+	gcc $(OBJ) -o $(EXE) $(LIB) $(STATIC) $(DBG) $(EXTRA) build/icon.res
