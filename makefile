@@ -28,3 +28,4 @@ build/%.o: src/%.c
 
 link: $(OBJ)
 	gcc $(OBJ) -o $(EXE) $(LIB) $(STATIC) $(DBG) $(EXTRA) build/icon.res
+	strip $(EXE)
