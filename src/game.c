@@ -51,6 +51,8 @@ void store_tile_state(Uint8 *tile, Uint8 state) {
  */
 void init_game(Game *game) {
     init_grid(game->grid);
+    game->menu = false;
+    game->menu_alpha = 0;
     game->score = 0;
     game->frame_count = 0;
     game->save_frame = 0;
@@ -619,7 +621,7 @@ void save_anim(Game *game) {
  * \param game The game to check the animation for
  */
 void check_upd_menu_fade(Game *game) {
-    if ((game->menu && game->menu_alpha != 150) || (!game->menu && game->menu_alpha != 0)) {
+    if ((game->menu && game->menu_alpha != MENU_FADE_MAX_ALPHA) || (!game->menu && game->menu_alpha != 0)) {
         game->update_menu_anim = true;
         manual_update();
     }
@@ -631,5 +633,14 @@ void check_upd_menu_fade(Game *game) {
  */
 void menu_fade(Game *game) {
     game->menu_alpha += (short)(game->menu ? MENU_ALPHA_STEP : -MENU_ALPHA_STEP);
+    if (game->menu_alpha <= 0) return;
     fill_rect(0, 0, WIN_W, WIN_H, (Color){0, 0, 0, game->menu_alpha});
+    short alpha = game->menu_alpha * 255 / MENU_FADE_MAX_ALPHA;
+    draw_text("font", "Game paused", 10, 10, (Color){255, 255, 255, alpha}, NW);
+    draw_text("font", "ESC      : Continue", 10, WIN_H - 110, (Color){255, 255, 255, alpha}, SW);
+    draw_text("font", "SPACE    : Drag the grid", 10, WIN_H - 90, (Color){255, 255, 255, alpha}, SW);
+    draw_text("font", "LMB      : Reveal tile", 10, WIN_H - 70, (Color){255, 255, 255, alpha}, SW);
+    draw_text("font", "RMB      : Flag tile", 10, WIN_H - 50, (Color){255, 255, 255, alpha}, SW);
+    draw_text("font", "S        : Save game", 10, WIN_H - 30, (Color){255, 255, 255, alpha}, SW);
+    draw_text("font", "R        : Reset game", 10, WIN_H - 10, (Color){255, 255, 255, alpha}, SW);
 }

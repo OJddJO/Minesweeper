@@ -73,7 +73,7 @@ void engine_init(const char *title, int width, int height, int fps) {
         exit(1);
     }
 
-    if (Mix_Init(MIX_INIT_MP3||MIX_INIT_OGG||MIX_INIT_WAVPACK) == 0) {
+    if (Mix_Init(MIX_INIT_MP3 || MIX_INIT_OGG || MIX_INIT_WAVPACK) == 0) {
         fprintf(stderr, "[ENGINE] Failed to initialize mixer: %s\n", Mix_GetError());
         exit(1);
     }

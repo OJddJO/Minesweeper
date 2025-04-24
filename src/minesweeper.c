@@ -22,8 +22,6 @@ int main(int argc, char *argv[]) {
     load_font("assets/font.ttf", 20, "font");
 
     Game *game = (Game *)malloc(sizeof(Game));
-    game->menu = false;
-    game->menu_alpha = 0;
     init_game(game);
 
     engine_run(update, draw, handle_input, game);
@@ -122,9 +120,7 @@ static void handle_input(SDL_Event event, Game *game) {
                 manual_update();
                 return;
             }
-            if (game->menu) {
-
-            } else {
+            if (!game->menu) {
                 int x, y;
                 get_mouse_position(&x, &y);
                 int row = (y + game->vy) / SQUARE_SIZE;

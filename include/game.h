@@ -2,7 +2,7 @@
 #define __GAME_H__
 
 #include "engine.h"
-#include <windows.h>
+#include <fileapi.h>
 #include <dirent.h>
 
 #define FPS 60
@@ -25,9 +25,9 @@
 #define MINES CHUNK_WIDTH*CHUNK_HEIGHT/5
 
 #define SAVE_ANIM_FRAMES 100
-#define MENU_ALPHA_STEP 10
 
-#define MENU_FADE_MAX_ALPHA 150
+#define MENU_ALPHA_STEP 10
+#define MENU_FADE_MAX_ALPHA 200
 
 enum _state {
     HIDDEN = 0,
