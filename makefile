@@ -5,8 +5,8 @@ OBJ         = $(subst src, build, $(patsubst %.c, %.o, $(SRC)))
 DBG         = # debug flags
 
 INCLUDE     = -I ./include
-LIB         = -L lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
-EXTRA       = -Werror -O3
+LIB         = -L lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -lSSGE
+EXTRA       = -Werror -Wall -O3 -mwindows
 STATIC      = # for static linking
 
 all: create_dirs build_resources link

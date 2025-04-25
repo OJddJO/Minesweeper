@@ -157,30 +157,33 @@ void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
  * Creates the tiles for the full grid
  */
 void create_tiles(Game *game) {
-    destroy_all_objects();
+    SSGE_destroy_all_objects();
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
             char name[20];
             sprintf(name, "%d_%d", row, col);
-            Texture *texture;
+            SSGE_Texture *texture;
             Uint8 value, state;
             get_tile_info(game->grid[row][col], &value, &state);
             switch (state)  {
                 case HIDDEN:
-                    texture = get_texture(T_HIDDEN);
+                    texture = SSGE_get_texture(T_HIDDEN);
                     break;
                 case FLAGGED:
-                    texture = get_texture(T_FLAG);
+                    texture = SSGE_get_texture(T_FLAG);
                     break;
                 case REVEALED:
                     if (value == 9) {
-                        texture = get_texture(T_WRONG);
+                        texture = SSGE_get_texture(T_WRONG);
                     } else {
-                        texture = get_texture(value + NUMBER_TILE_OFFSET);
+                        texture = SSGE_get_texture(value + NUMBER_TILE_OFFSET);
                     }
                     break;
+                default:
+                    texture = SSGE_get_texture(T_HIDDEN);
+                    break;
             }
-            create_object(name, texture, col * SQUARE_SIZE - game->vx, row * SQUARE_SIZE - game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
+            SSGE_create_object(name, texture, col * SQUARE_SIZE - game->vx, row * SQUARE_SIZE - game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
         }
     }
 }
@@ -227,15 +230,15 @@ void reveal_tile(Game *game, int row, int col) {
     store_tile_state(&game->grid[row][col], REVEALED);
     char name[10];
     sprintf(name, "%d_%d", row, col);
-    Object *obj = get_object_by_name(name);
+    SSGE_Object *obj = SSGE_get_object_by_name(name);
     Uint8 value = get_tile_value(game->grid[row][col]);
     if (value == 9) {
-        change_object_texture(obj, get_texture(T_WRONG));
+        SSGE_change_object_texture(obj, SSGE_get_texture(T_WRONG));
         reveal_bombs(game, row, col);
         game->game_over = true;
     } else {
         game->score++;
-        change_object_texture(obj, get_texture(value + NUMBER_TILE_OFFSET));
+        SSGE_change_object_texture(obj, SSGE_get_texture(value + NUMBER_TILE_OFFSET));
         if (value == 0) {
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
@@ -261,7 +264,7 @@ void reveal_bombs(Game *game, int row, int col) {
         for (int j = 0; j < MAP_WIDTH; j++) { // col
             char name[10];
             sprintf(name, "%d_%d", i, j);
-            Object *obj = get_object_by_name(name);
+            SSGE_Object *obj = SSGE_get_object_by_name(name);
             Uint8 value, state;
             get_tile_info(game->grid[i][j], &value, &state);
             if ((i == row && j == col) || state == REVEALED) {
@@ -270,9 +273,9 @@ void reveal_bombs(Game *game, int row, int col) {
             if (state == FLAGGED && value == 9) {
                 continue;
             } else if (state == FLAGGED && value != 9) {
-                change_object_texture(obj, get_texture(T_BADFLAG));
+                SSGE_change_object_texture(obj, SSGE_get_texture(T_BADFLAG));
             } else if (value == 9) {
-                change_object_texture(obj, get_texture(T_MINE));
+                SSGE_change_object_texture(obj, SSGE_get_texture(T_MINE));
             }
         }
     }
@@ -382,7 +385,7 @@ void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int ro
  */
 void add_chunk_to_game(Game *game, int row, int col, int crow, int ccol) {
     Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
-    char filename[30];
+    char filename[50];
     sprintf(filename, "saves/%d.%d.msav", game->cy + row - 1, game->cx + col - 1);
     bool exists = file_exists(filename);
     if (exists) {
@@ -475,7 +478,7 @@ void load_data(Game *game) {
  * \param col The column of the chunk
  */
 void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
-    char filename[30];
+    char filename[50];
     sprintf(filename, "saves/%d.%d.msav", row, col);
     FILE *file = fopen(filename, "wb");
     fwrite(chunk, sizeof(Uint8), CHUNK_HEIGHT * CHUNK_WIDTH, file);
@@ -558,7 +561,7 @@ void delete_save() {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
-        char filename[30];
+        char filename[300];
         sprintf(filename, "saves/%s", entry->d_name);
         if (remove(filename) != 0) {
             fprintf(stderr, "Error deleting file %s\n", filename);
@@ -592,7 +595,7 @@ void check_upd_save_anim(Game *game) {
     }
     if (df % 2 == 0 && df <= SAVE_ANIM_FRAMES) {
         game->update_save_anim = true;
-        manual_update();
+        SSGE_manual_update();
     }
 }
 
@@ -607,12 +610,12 @@ void save_anim(Game *game) {
     }
     if (df < SAVE_ANIM_FRAMES/2) { // fade in
         int alpha = 255 * df / (SAVE_ANIM_FRAMES/2);
-        draw_text("font", "Game saved", 11, 11, (Color){0, 0, 0, alpha}, NW);
-        draw_text("font", "Game saved", 10, 10, (Color){255, 255, 255, alpha}, NW);
+        SSGE_draw_text("font", "Game saved", 11, 11, (SSGE_Color){0, 0, 0, alpha}, NW);
+        SSGE_draw_text("font", "Game saved", 10, 10, (SSGE_Color){255, 255, 255, alpha}, NW);
     } else { // fade out
         int alpha = 255 - 255 * (df - SAVE_ANIM_FRAMES/2) / (SAVE_ANIM_FRAMES/2);
-        draw_text("font", "Game saved", 11, 11, (Color){0, 0, 0, alpha}, NW);
-        draw_text("font", "Game saved", 10, 10, (Color){255, 255, 255, alpha}, NW);
+        SSGE_draw_text("font", "Game saved", 11, 11, (SSGE_Color){0, 0, 0, alpha}, NW);
+        SSGE_draw_text("font", "Game saved", 10, 10, (SSGE_Color){255, 255, 255, alpha}, NW);
     }
 }
 
@@ -623,7 +626,7 @@ void save_anim(Game *game) {
 void check_upd_menu_fade(Game *game) {
     if ((game->menu && game->menu_alpha != MENU_FADE_MAX_ALPHA) || (!game->menu && game->menu_alpha != 0)) {
         game->update_menu_anim = true;
-        manual_update();
+        SSGE_manual_update();
     }
 }
 
@@ -634,13 +637,13 @@ void check_upd_menu_fade(Game *game) {
 void menu_fade(Game *game) {
     game->menu_alpha += (short)(game->menu ? MENU_ALPHA_STEP : -MENU_ALPHA_STEP);
     if (game->menu_alpha <= 0) return;
-    fill_rect(0, 0, WIN_W, WIN_H, (Color){0, 0, 0, game->menu_alpha});
+    SSGE_fill_rect(0, 0, WIN_W, WIN_H, (SSGE_Color){0, 0, 0, game->menu_alpha});
     short alpha = game->menu_alpha * 255 / MENU_FADE_MAX_ALPHA;
-    draw_text("font", "Game paused", 10, 10, (Color){255, 255, 255, alpha}, NW);
-    draw_text("font", "ESC      : Continue", 10, WIN_H - 110, (Color){255, 255, 255, alpha}, SW);
-    draw_text("font", "SPACE    : Drag the grid", 10, WIN_H - 90, (Color){255, 255, 255, alpha}, SW);
-    draw_text("font", "LMB      : Reveal tile", 10, WIN_H - 70, (Color){255, 255, 255, alpha}, SW);
-    draw_text("font", "RMB      : Flag tile", 10, WIN_H - 50, (Color){255, 255, 255, alpha}, SW);
-    draw_text("font", "S        : Save game", 10, WIN_H - 30, (Color){255, 255, 255, alpha}, SW);
-    draw_text("font", "R        : Reset game", 10, WIN_H - 10, (Color){255, 255, 255, alpha}, SW);
+    SSGE_draw_text("font", "Game paused", 10, 10, (SSGE_Color){255, 255, 255, alpha}, NW);
+    SSGE_draw_text("font", "ESC      : Continue", 10, WIN_H - 110, (SSGE_Color){255, 255, 255, alpha}, SW);
+    SSGE_draw_text("font", "SPACE    : Drag the grid", 10, WIN_H - 90, (SSGE_Color){255, 255, 255, alpha}, SW);
+    SSGE_draw_text("font", "LMB      : Reveal tile", 10, WIN_H - 70, (SSGE_Color){255, 255, 255, alpha}, SW);
+    SSGE_draw_text("font", "RMB      : Flag tile", 10, WIN_H - 50, (SSGE_Color){255, 255, 255, alpha}, SW);
+    SSGE_draw_text("font", "S        : Save game", 10, WIN_H - 30, (SSGE_Color){255, 255, 255, alpha}, SW);
+    SSGE_draw_text("font", "R        : Reset game", 10, WIN_H - 10, (SSGE_Color){255, 255, 255, alpha}, SW);
 }

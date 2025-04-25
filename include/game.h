@@ -1,7 +1,7 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
-#include "engine.h"
+#include "SSGE.h"
 #include <fileapi.h>
 #include <dirent.h>
 

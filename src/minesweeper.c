@@ -10,27 +10,27 @@ static void update(Game *game);
  * Main function
  */
 int main(int argc, char *argv[]) {
-    engine_init("Minesweeper", WIN_W, WIN_H, FPS);
-    set_manual_update(true);
-    set_background_color((SDL_Color){191, 191, 191, 255});
-    set_window_icon("assets/icon.png");
+    SSGE_engine_init("Minesweeper", WIN_W, WIN_H, FPS);
+    SSGE_set_manual_update(true);
+    SSGE_set_background_color((SDL_Color){191, 191, 191, 255});
+    SSGE_set_window_icon("assets/icon.png");
 
     srand(time(NULL));
     CreateDirectory("saves", NULL);
 
     init_assets();
-    load_font("assets/font.ttf", 20, "font");
+    SSGE_load_font("assets/font.ttf", 20, "font");
 
     Game *game = (Game *)malloc(sizeof(Game));
     init_game(game);
 
-    engine_run(update, draw, handle_input, game);
+    SSGE_engine_run(update, draw, handle_input, game);
     save_game(game);
 
-    destroy_all_objects();
-    destroy_all_textures();
-    close_all_fonts();
-    engine_quit();
+    SSGE_destroy_all_objects();
+    SSGE_destroy_all_textures();
+    SSGE_close_all_fonts();
+    SSGE_engine_quit();
     free(game);
     return 0;
 }
@@ -44,16 +44,16 @@ static void draw(Game *game) {
         for (int col = 0; col < MAP_WIDTH; col++) {
             char name[10];
             sprintf(name, "%d_%d", row, col);
-            draw_object(get_object_by_name(name));
+            SSGE_draw_object(SSGE_get_object_by_name(name));
         }
     }
     char score[20];
     sprintf(score, "Score: %d", game->score);
-    draw_text("font", score, 11, WIN_H - 9, (SDL_Color){0, 0, 0, 255}, SW);
-    draw_text("font", score, 10, WIN_H - 10, (SDL_Color){255, 255, 255, 255}, SW);
+    SSGE_draw_text("font", score, 11, WIN_H - 9, (SDL_Color){0, 0, 0, 255}, SW);
+    SSGE_draw_text("font", score, 10, WIN_H - 10, (SDL_Color){255, 255, 255, 255}, SW);
     char title[50];
     sprintf(title, "Minesweeper - %s - %s", game->game_over ? "Game Over" : "Playing", score);
-    set_window_title(title);
+    SSGE_set_window_title(title);
     anim(game);
 }
 
@@ -65,7 +65,7 @@ static void update(Game *game) {
     if (game->game_over) return;
     if (game->space_pressed && !game->menu) {
         int dx, dy;
-        get_mouse_position(&dx, &dy);
+        SSGE_get_mouse_position(&dx, &dy);
         dx -= game->mx;
         dy -= game->my;
         if (dx != 0 || dy != 0) {
@@ -73,7 +73,7 @@ static void update(Game *game) {
                 for (int col = 0; col < MAP_WIDTH; col++) {
                     char name[10];
                     sprintf(name, "%d_%d", row, col);
-                    Object *obj = get_object_by_name(name);
+                    SSGE_Object *obj = SSGE_get_object_by_name(name);
                     obj->x += dx;
                     obj->y += dy;
                 }
@@ -97,11 +97,11 @@ static void update(Game *game) {
             game->vy -= dy * CHUNK_HEIGHT * SQUARE_SIZE;
             create_tiles(game);
         }
-        manual_update();
+        SSGE_manual_update();
     }
 
     check_upd_anim(game);
-    get_mouse_position(&game->mx, &game->my);
+    SSGE_get_mouse_position(&game->mx, &game->my);
     game->frame_count++;
 }
 
@@ -117,12 +117,12 @@ static void handle_input(SDL_Event event, Game *game) {
             if (game->game_over) {
                 delete_save();
                 init_game(game);
-                manual_update();
+                SSGE_manual_update();
                 return;
             }
             if (!game->menu) {
                 int x, y;
-                get_mouse_position(&x, &y);
+                SSGE_get_mouse_position(&x, &y);
                 int row = (y + game->vy) / SQUARE_SIZE;
                 int col = (x + game->vx) / SQUARE_SIZE;
                 Uint8 value, state;
@@ -135,15 +135,15 @@ static void handle_input(SDL_Event event, Game *game) {
                         update = true;
                         break;
                     case (SDL_BUTTON_RIGHT):
-                        char name[10];
+                        char name[20];
                         sprintf(name, "%d_%d", row, col);
-                        Object *obj = get_object_by_name(name);
+                        SSGE_Object *obj = SSGE_get_object_by_name(name);
                         if (state == HIDDEN) {
                             store_tile_state(&game->grid[row][col], FLAGGED);
-                            change_object_texture(obj, get_texture(T_FLAG));
+                            SSGE_change_object_texture(obj, SSGE_get_texture(T_FLAG));
                         } else if (state == FLAGGED) {
                             store_tile_state(&game->grid[row][col], HIDDEN);
-                            change_object_texture(obj, get_texture(T_HIDDEN));
+                            SSGE_change_object_texture(obj, SSGE_get_texture(T_HIDDEN));
                         }
                         update = true;
                         break;
@@ -185,32 +185,32 @@ static void handle_input(SDL_Event event, Game *game) {
             }
             break;
     }
-    if (update) manual_update();
+    if (update) SSGE_manual_update();
 }
 
 /**
  * Initializes the assets
  */
 static void init_assets() {
-    Tilemap *tilemap = load_tilemap("assets/tiles.png", 6, 6, 0, 4, 4);
+    SSGE_Tilemap *tilemap = SSGE_load_tilemap("assets/tiles.png", 6, 6, 0, 4, 4);
 
     // From 1 - 7
-    get_tile_as_texture("hidden", tilemap, 2, 0);
-    get_tile_as_texture("mine", tilemap, 2, 1);
-    get_tile_as_texture("flag", tilemap, 2, 2);
-    get_tile_as_texture("wrong", tilemap, 2, 3);
-    get_tile_as_texture("bad_flag", tilemap, 3, 0);
-    get_tile_as_texture("background", tilemap, 3, 3);
+    SSGE_get_tile_as_texture("hidden", tilemap, 2, 0);
+    SSGE_get_tile_as_texture("mine", tilemap, 2, 1);
+    SSGE_get_tile_as_texture("flag", tilemap, 2, 2);
+    SSGE_get_tile_as_texture("wrong", tilemap, 2, 3);
+    SSGE_get_tile_as_texture("bad_flag", tilemap, 3, 0);
+    SSGE_get_tile_as_texture("background", tilemap, 3, 3);
 
     // From 7 - 13
-    get_tile_as_texture("1", tilemap, 0, 0);
-    get_tile_as_texture("2", tilemap, 0, 1);
-    get_tile_as_texture("3", tilemap, 0, 2);
-    get_tile_as_texture("4", tilemap, 0, 3);
-    get_tile_as_texture("5", tilemap, 1, 0);
-    get_tile_as_texture("6", tilemap, 1, 1);
-    get_tile_as_texture("7", tilemap, 1, 2);
-    get_tile_as_texture("8", tilemap, 1, 3);
+    SSGE_get_tile_as_texture("1", tilemap, 0, 0);
+    SSGE_get_tile_as_texture("2", tilemap, 0, 1);
+    SSGE_get_tile_as_texture("3", tilemap, 0, 2);
+    SSGE_get_tile_as_texture("4", tilemap, 0, 3);
+    SSGE_get_tile_as_texture("5", tilemap, 1, 0);
+    SSGE_get_tile_as_texture("6", tilemap, 1, 1);
+    SSGE_get_tile_as_texture("7", tilemap, 1, 2);
+    SSGE_get_tile_as_texture("8", tilemap, 1, 3);
 
-    destroy_tilemap(tilemap);
+    SSGE_destroy_tilemap(tilemap);
 }
