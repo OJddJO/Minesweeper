@@ -6,25 +6,25 @@
  * \param value The variable to store the value in
  * \param state The variable to store the state in
  */
-void get_tile_info(Uint8 tile, Uint8 *value, Uint8 *state) {
-    *value = (Uint8)(tile & 0b00001111);
-    *state = (Uint8)((tile & 0b11000000) >> 6);
+void get_tile_info(uint8_t tile, uint8_t *value, uint8_t *state) {
+    *value = (uint8_t)(tile & 0b00001111);
+    *state = (uint8_t)((tile & 0b11000000) >> 6);
 }
 
 /**
  * Gets the value of a tile
  * \param tile The tile to get the value from
  */
-Uint8 get_tile_value(Uint8 tile) {
-    return (Uint8)(tile & 0b00001111);
+uint8_t get_tile_value(uint8_t tile) {
+    return (uint8_t)(tile & 0b00001111);
 }
 
 /**
  * Gets the state of a tile
  * \param tile The tile to get the state from
  */
-Uint8 get_tile_state(Uint8 tile) {
-    return (Uint8)((tile & 0b11000000) >> 6);
+uint8_t get_tile_state(uint8_t tile) {
+    return (uint8_t)((tile & 0b11000000) >> 6);
 }
 
 /**
@@ -32,8 +32,8 @@ Uint8 get_tile_state(Uint8 tile) {
  * \param tile The tile to store the value in
  * \param value The value to store
  */
-void store_tile_value(Uint8 *tile, Uint8 value) {
-    *tile = (Uint8)((*tile & 0b11000000) | value);
+void store_tile_value(uint8_t *tile, uint8_t value) {
+    *tile = (uint8_t)((*tile & 0b11000000) | value);
 }
 
 /**
@@ -41,8 +41,8 @@ void store_tile_value(Uint8 *tile, Uint8 value) {
  * \param tile The tile to store the state in
  * \param state The state to store
  */
-void store_tile_state(Uint8 *tile, Uint8 state) {
-    *tile = (Uint8)((*tile & 0b00001111) | (state << 6));
+void store_tile_state(uint8_t *tile, uint8_t state) {
+    *tile = (uint8_t)((*tile & 0b00001111) | (state << 6));
 }
 
 /**
@@ -50,7 +50,6 @@ void store_tile_state(Uint8 *tile, Uint8 state) {
  * \param game The game to initialize
  */
 void init_game(Game *game) {
-    init_grid(game->grid);
     game->menu = false;
     game->menu_alpha = 0;
     game->score = 0;
@@ -72,7 +71,7 @@ void init_game(Game *game) {
  * Initializes the grid with 0s
  * \param grid The grid to initialize
  */
-void init_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
+void init_grid(uint8_t grid[MAP_HEIGHT][MAP_WIDTH]) {
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
             grid[row][col] = 0;
@@ -85,7 +84,7 @@ void init_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
  * \param grid The grid to load the chunks to
  * \param chunks The chunks to load
  */
-void load_chunks_to_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH], Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH]) {
+void load_chunks_to_grid(uint8_t grid[MAP_HEIGHT][MAP_WIDTH], uint8_t chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH]) {
     for (int i = 0; i < 3; i++) { // row
         for (int j = 0; j < 3; j++) { // col
             for (int row = 0; row < CHUNK_HEIGHT; row++) {
@@ -101,7 +100,7 @@ void load_chunks_to_grid(Uint8 grid[MAP_HEIGHT][MAP_WIDTH], Uint8 chunks[3][3][C
  * Generates the numbers in the grid
  * \param grid The grid to generate the numbers in
  */
-void gen_numbers(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
+void gen_numbers(uint8_t grid[MAP_HEIGHT][MAP_WIDTH]) {
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
             if (get_tile_value(grid[row][col]) == 9) {
@@ -128,7 +127,7 @@ void gen_numbers(Uint8 grid[MAP_HEIGHT][MAP_WIDTH]) {
  * Generates a chunk
  * \param chunk The chunk to generate
  */
-void gen_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
+void gen_chunk(uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
     for (int row = 0; row < CHUNK_HEIGHT; row++) {
         for (int col = 0; col < CHUNK_WIDTH; col++) {
             chunk[row][col] = 0;
@@ -141,7 +140,7 @@ void gen_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
  * Generates the mines in a chunk
  * \param chunk The chunk to generate the mines in
  */
-void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
+void gen_mines(uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
     for (int i = 0; i < MINES; i++) {
         int row = rand() % CHUNK_HEIGHT;
         int col = rand() % CHUNK_WIDTH;
@@ -157,33 +156,33 @@ void gen_mines(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH]) {
  * Creates the tiles for the full grid
  */
 void create_tiles(Game *game) {
-    SSGE_destroy_all_objects();
+    SSGE_DestroyAllObjects();
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
             char name[20];
             sprintf(name, "%d_%d", row, col);
             SSGE_Texture *texture;
-            Uint8 value, state;
+            uint8_t value, state;
             get_tile_info(game->grid[row][col], &value, &state);
             switch (state)  {
                 case HIDDEN:
-                    texture = SSGE_get_texture(T_HIDDEN);
+                    texture = SSGE_GetTexture(T_HIDDEN);
                     break;
                 case FLAGGED:
-                    texture = SSGE_get_texture(T_FLAG);
+                    texture = SSGE_GetTexture(T_FLAG);
                     break;
                 case REVEALED:
                     if (value == 9) {
-                        texture = SSGE_get_texture(T_WRONG);
+                        texture = SSGE_GetTexture(T_WRONG);
                     } else {
-                        texture = SSGE_get_texture(value + NUMBER_TILE_OFFSET);
+                        texture = SSGE_GetTexture(value + NUMBER_TILE_OFFSET);
                     }
                     break;
                 default:
-                    texture = SSGE_get_texture(T_HIDDEN);
+                    texture = SSGE_GetTexture(T_HIDDEN);
                     break;
             }
-            SSGE_create_object(name, texture, col * SQUARE_SIZE - game->vx, row * SQUARE_SIZE - game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL);
+            SSGE_CreateObject(name, texture, col * SQUARE_SIZE - game->vx, row * SQUARE_SIZE - game->vy, SQUARE_SIZE, SQUARE_SIZE, false, NULL, NULL);
         }
     }
 }
@@ -195,7 +194,7 @@ void create_tiles(Game *game) {
 void start_game(Game *game, int row, int col) {
     init_grid(game->grid);
     if (!file_exists("saves/data.msav")) {
-        Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
+        uint8_t chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 gen_chunk(chunks[i][j]);
@@ -230,22 +229,22 @@ void reveal_tile(Game *game, int row, int col) {
     store_tile_state(&game->grid[row][col], REVEALED);
     char name[10];
     sprintf(name, "%d_%d", row, col);
-    SSGE_Object *obj = SSGE_get_object_by_name(name);
-    Uint8 value = get_tile_value(game->grid[row][col]);
+    SSGE_Object *obj = SSGE_GetObjectByName(name);
+    uint8_t value = get_tile_value(game->grid[row][col]);
     if (value == 9) {
-        SSGE_change_object_texture(obj, SSGE_get_texture(T_WRONG));
+        SSGE_ChangeObjectTexture(obj, SSGE_GetTexture(T_WRONG));
         reveal_bombs(game, row, col);
         game->game_over = true;
     } else {
         game->score++;
-        SSGE_change_object_texture(obj, SSGE_get_texture(value + NUMBER_TILE_OFFSET));
+        SSGE_ChangeObjectTexture(obj, SSGE_GetTexture(value + NUMBER_TILE_OFFSET));
         if (value == 0) {
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
                     if (!in_grid(row+i, col+j)) {
                         continue;
                     }
-                    Uint8 state = get_tile_state(game->grid[row+i][col+j]);
+                    uint8_t state = get_tile_state(game->grid[row+i][col+j]);
                     if (state == HIDDEN) {
                         reveal_tile(game, row+i, col+j);
                     }
@@ -264,8 +263,8 @@ void reveal_bombs(Game *game, int row, int col) {
         for (int j = 0; j < MAP_WIDTH; j++) { // col
             char name[10];
             sprintf(name, "%d_%d", i, j);
-            SSGE_Object *obj = SSGE_get_object_by_name(name);
-            Uint8 value, state;
+            SSGE_Object *obj = SSGE_GetObjectByName(name);
+            uint8_t value, state;
             get_tile_info(game->grid[i][j], &value, &state);
             if ((i == row && j == col) || state == REVEALED) {
                 continue;
@@ -273,9 +272,9 @@ void reveal_bombs(Game *game, int row, int col) {
             if (state == FLAGGED && value == 9) {
                 continue;
             } else if (state == FLAGGED && value != 9) {
-                SSGE_change_object_texture(obj, SSGE_get_texture(T_BADFLAG));
+                SSGE_ChangeObjectTexture(obj, SSGE_GetTexture(T_BADFLAG));
             } else if (value == 9) {
-                SSGE_change_object_texture(obj, SSGE_get_texture(T_MINE));
+                SSGE_ChangeObjectTexture(obj, SSGE_GetTexture(T_MINE));
             }
         }
     }
@@ -288,7 +287,7 @@ void reveal_bombs(Game *game, int row, int col) {
  * \param col The column of the number tile
  */
 void reveal_number(Game *game, int row, int col) {
-    Uint8 n = get_tile_value(game->grid[row][col]);
+    uint8_t n = get_tile_value(game->grid[row][col]);
     int flag_count = 0;
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
@@ -333,7 +332,7 @@ void calc_current_centered_chunk(Game *game, int *x, int *y) {
  * \param dy The y direction of the shift
  */
 void shift_game_chunks(Game *game, int dx, int dy) {
-    Uint8 result[MAP_HEIGHT][MAP_WIDTH];
+    uint8_t result[MAP_HEIGHT][MAP_WIDTH];
     init_grid(result);
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
@@ -358,14 +357,14 @@ void shift_game_chunks(Game *game, int dx, int dy) {
  * \param crow The row of the chunk
  * \param ccol The column of the chunk
  */
-void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col, int crow, int ccol) {
+void check_mine_valid(Game *game, uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col, int crow, int ccol) {
     //check around the mine if there is already a number
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             if (!in_grid(crow*CHUNK_HEIGHT + row + i, ccol*CHUNK_WIDTH + col + j)) {
                 continue;
             }
-            Uint8 state = get_tile_state(game->grid[crow*CHUNK_HEIGHT + row + i][ccol*CHUNK_WIDTH + col + j]);
+            uint8_t state = get_tile_state(game->grid[crow*CHUNK_HEIGHT + row + i][ccol*CHUNK_WIDTH + col + j]);
             if (state == REVEALED) {
                 chunk[row][col] = 0;
                 return;
@@ -384,7 +383,7 @@ void check_mine_valid(Game *game, Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int ro
  * \param ccol The column of the chunk to load
  */
 void add_chunk_to_game(Game *game, int row, int col, int crow, int ccol) {
-    Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
+    uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
     char filename[50];
     sprintf(filename, "saves/%d.%d.msav", game->cy + row - 1, game->cx + col - 1);
     bool exists = file_exists(filename);
@@ -443,7 +442,7 @@ void save_data(Game *game) {
         fprintf(stderr, "Error opening file saves/data.msav\n");
         exit(1);
     }
-    fwrite(&game->score, sizeof(Uint32), 1, file);
+    fwrite(&game->score, sizeof(uint32_t), 1, file);
     fwrite(&game->game_over, sizeof(bool), 1, file);
     fwrite(&game->vx, sizeof(int), 1, file);
     fwrite(&game->vy, sizeof(int), 1, file);
@@ -462,7 +461,7 @@ void load_data(Game *game) {
         fprintf(stderr, "Error opening file saves/data.msav\n");
         exit(1);
     }
-    fread(&game->score, sizeof(Uint32), 1, file);
+    fread(&game->score, sizeof(uint32_t), 1, file);
     fread(&game->game_over, sizeof(bool), 1, file);
     fread(&game->vx, sizeof(int), 1, file);
     fread(&game->vy, sizeof(int), 1, file);
@@ -477,11 +476,11 @@ void load_data(Game *game) {
  * \param row The row of the chunk
  * \param col The column of the chunk
  */
-void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
+void save_chunk(uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
     char filename[50];
     sprintf(filename, "saves/%d.%d.msav", row, col);
     FILE *file = fopen(filename, "wb");
-    fwrite(chunk, sizeof(Uint8), CHUNK_HEIGHT * CHUNK_WIDTH, file);
+    fwrite(chunk, sizeof(uint8_t), CHUNK_HEIGHT * CHUNK_WIDTH, file);
     fclose(file);
 }
 
@@ -492,7 +491,7 @@ void save_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
 void save_chunks(Game *game) {
     for (int crow = 0; crow < 3; crow++) { // iter through chunk row
         for (int ccol = 0; ccol < 3; ccol++) { // iter through chunk col
-            Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
+            uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH];
             for (int row = 0; row < CHUNK_HEIGHT; row++) {
                 for (int col = 0; col < CHUNK_WIDTH; col++) {
                     chunk[row][col] = game->grid[crow*CHUNK_HEIGHT + row][ccol*CHUNK_WIDTH + col];
@@ -509,7 +508,7 @@ void save_chunks(Game *game) {
  * \param row The row of the chunk
  * \param col The column of the chunk
  */
-void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
+void load_chunk(uint8_t chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
     char filename[30];
     sprintf(filename, "saves/%d.%d.msav", row, col);
     FILE *file = fopen(filename, "rb");
@@ -521,7 +520,7 @@ void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
 
     for (int row = 0; row < CHUNK_HEIGHT; row++) {
         for (int col = 0; col < CHUNK_WIDTH; col++) {
-            fread(&chunk[row][col], sizeof(Uint8), 1, file);
+            fread(&chunk[row][col], sizeof(uint8_t), 1, file);
         }
     }
     fclose(file);
@@ -534,7 +533,7 @@ void load_chunk(Uint8 chunk[CHUNK_HEIGHT][CHUNK_WIDTH], int row, int col) {
  * \param col The column of the center chunk to load
  */
 void load_chunks(Game *game, int row, int col) {
-    Uint8 chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
+    uint8_t chunks[3][3][CHUNK_HEIGHT][CHUNK_WIDTH];
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             load_chunk(chunks[i+1][j+1], row+i, col+j);
@@ -595,7 +594,7 @@ void check_upd_save_anim(Game *game) {
     }
     if (df % 2 == 0 && df <= SAVE_ANIM_FRAMES) {
         game->update_save_anim = true;
-        SSGE_manual_update();
+        SSGE_ManualUpdate();
     }
 }
 
@@ -610,12 +609,12 @@ void save_anim(Game *game) {
     }
     if (df < SAVE_ANIM_FRAMES/2) { // fade in
         int alpha = 255 * df / (SAVE_ANIM_FRAMES/2);
-        SSGE_draw_text("font", "Game saved", 11, 11, (SSGE_Color){0, 0, 0, alpha}, NW);
-        SSGE_draw_text("font", "Game saved", 10, 10, (SSGE_Color){255, 255, 255, alpha}, NW);
+        SSGE_DrawText("font", "Game saved", 11, 11, (SSGE_Color){0, 0, 0, alpha}, SSGE_NW);
+        SSGE_DrawText("font", "Game saved", 10, 10, (SSGE_Color){255, 255, 255, alpha}, SSGE_NW);
     } else { // fade out
         int alpha = 255 - 255 * (df - SAVE_ANIM_FRAMES/2) / (SAVE_ANIM_FRAMES/2);
-        SSGE_draw_text("font", "Game saved", 11, 11, (SSGE_Color){0, 0, 0, alpha}, NW);
-        SSGE_draw_text("font", "Game saved", 10, 10, (SSGE_Color){255, 255, 255, alpha}, NW);
+        SSGE_DrawText("font", "Game saved", 11, 11, (SSGE_Color){0, 0, 0, alpha}, SSGE_NW);
+        SSGE_DrawText("font", "Game saved", 10, 10, (SSGE_Color){255, 255, 255, alpha}, SSGE_NW);
     }
 }
 
@@ -626,7 +625,7 @@ void save_anim(Game *game) {
 void check_upd_menu_fade(Game *game) {
     if ((game->menu && game->menu_alpha != MENU_FADE_MAX_ALPHA) || (!game->menu && game->menu_alpha != 0)) {
         game->update_menu_anim = true;
-        SSGE_manual_update();
+        SSGE_ManualUpdate();
     }
 }
 
@@ -637,13 +636,13 @@ void check_upd_menu_fade(Game *game) {
 void menu_fade(Game *game) {
     game->menu_alpha += (short)(game->menu ? MENU_ALPHA_STEP : -MENU_ALPHA_STEP);
     if (game->menu_alpha <= 0) return;
-    SSGE_fill_rect(0, 0, WIN_W, WIN_H, (SSGE_Color){0, 0, 0, game->menu_alpha});
+    SSGE_FillRect(0, 0, WIN_W, WIN_H, (SSGE_Color){0, 0, 0, game->menu_alpha});
     short alpha = game->menu_alpha * 255 / MENU_FADE_MAX_ALPHA;
-    SSGE_draw_text("font", "Game paused", 10, 10, (SSGE_Color){255, 255, 255, alpha}, NW);
-    SSGE_draw_text("font", "ESC      : Continue", 10, WIN_H - 110, (SSGE_Color){255, 255, 255, alpha}, SW);
-    SSGE_draw_text("font", "SPACE    : Drag the grid", 10, WIN_H - 90, (SSGE_Color){255, 255, 255, alpha}, SW);
-    SSGE_draw_text("font", "LMB      : Reveal tile", 10, WIN_H - 70, (SSGE_Color){255, 255, 255, alpha}, SW);
-    SSGE_draw_text("font", "RMB      : Flag tile", 10, WIN_H - 50, (SSGE_Color){255, 255, 255, alpha}, SW);
-    SSGE_draw_text("font", "S        : Save game", 10, WIN_H - 30, (SSGE_Color){255, 255, 255, alpha}, SW);
-    SSGE_draw_text("font", "R        : Reset game", 10, WIN_H - 10, (SSGE_Color){255, 255, 255, alpha}, SW);
+    SSGE_DrawText("font", "Game paused", 10, 10, (SSGE_Color){255, 255, 255, alpha}, SSGE_NW);
+    SSGE_DrawText("font", "ESC      : Continue", 10, WIN_H - 110, (SSGE_Color){255, 255, 255, alpha}, SSGE_SW);
+    SSGE_DrawText("font", "SPACE    : Drag the grid", 10, WIN_H - 90, (SSGE_Color){255, 255, 255, alpha}, SSGE_SW);
+    SSGE_DrawText("font", "LMB      : Reveal tile", 10, WIN_H - 70, (SSGE_Color){255, 255, 255, alpha}, SSGE_SW);
+    SSGE_DrawText("font", "RMB      : Flag tile", 10, WIN_H - 50, (SSGE_Color){255, 255, 255, alpha}, SSGE_SW);
+    SSGE_DrawText("font", "S        : Save game", 10, WIN_H - 30, (SSGE_Color){255, 255, 255, alpha}, SSGE_SW);
+    SSGE_DrawText("font", "R        : Reset game", 10, WIN_H - 10, (SSGE_Color){255, 255, 255, alpha}, SSGE_SW);
 }
