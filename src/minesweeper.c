@@ -21,14 +21,13 @@ int main(int argc, char *argv[]) {
     init_assets();
     SSGE_LoadFont("assets/font.ttf", 20, "font");
 
-    Game *game = (Game *)malloc(sizeof(Game));
-    init_game(game);
+    Game game;
+    init_game(&game);
 
-    SSGE_Run(update, draw, handle_input, game);
-    save_game(game);
+    SSGE_Run(update, draw, handle_input, &game);
+    save_game(&game);
 
     SSGE_Quit();
-    free(game);
     return 0;
 }
 
