@@ -3,6 +3,10 @@
 #ifndef __SSGE_KEYBOARD_H__
 #define __SSGE_KEYBOARD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _SCANCODE_TO_KEYCODE(X) (X | 1<<30)
 
 enum _SSGE_Scancode {
@@ -675,5 +679,9 @@ typedef enum
     SSGE_KEY_CALL = _SCANCODE_TO_KEYCODE(SSGE_SCANCODE_CALL),
     SSGE_KEY_ENDCALL = _SCANCODE_TO_KEYCODE(SSGE_SCANCODE_ENDCALL)
 } SSGE_KEY_KeyCode;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __SSGE_KEYBOARD_H__

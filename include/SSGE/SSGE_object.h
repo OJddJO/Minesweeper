@@ -9,113 +9,129 @@ extern "C" {
 #endif
 
 /**
- * Creates an object
+ * Create an object
+ * \param id Where to store the id of the object
  * \param name The name of the object
- * \param texture The texture of the object
- * \param x The x position of the object
- * \param y The y position of the object
+ * \param x The x coordinate of the object
+ * \param y The y coordinate of the object
  * \param width The width of the object
  * \param height The height of the object
- * \param hitbox True if the object has a hitbox, false otherwise
+ * \param hitbox True if the object has an hitbox, false otherwise
  * \param data The data of the object
  * \param destroyData The function to destroy the data of the object
- * \return The object id
+ * \return The object
  * \note The object is stored internally and can be accessed by its name or its id
  */
-SSGEDECL uint32_t SSGE_CreateObject(char *name, SSGE_Texture *texture, int x, int y, int width, int height, bool hitbox, void *data, void (*destroyData)(void *));
+SSGEAPI SSGE_Object *SSGE_Object_Create(uint32_t *id, char *name, int x, int y, int width, int height, bool hitbox, void *data, void (*destroyData)(void *));
 
 /**
- * Instantiates an object from an object template
+ * Instantiate an object from an object template
+ * \param id Where to store the id of the object
  * \param template The object template to instantiate
- * \param x The x position of the object
- * \param y The y position of the object
+ * \param x The x coordinate of the object
+ * \param y The y coordinate of the object
  * \param data The data of the object
- * \return The object id
+ * \return The object
  * \note The object is stored internally and can be accessed by its name or its id
  */
-SSGEDECL uint32_t SSGE_InstantiateObject(SSGE_ObjectTemplate *template, char *name, int x, int y, void *data);
+SSGEAPI SSGE_Object *SSGE_Object_Instantiate(uint32_t *id, SSGE_ObjectTemplate *template, char *name, int x, int y, void *data);
 
 /**
- * Checks if an object exists
+ * Check if an object exists
  * \param id The id of the object
  * \return True if the object exists, false otherwise
  */
-SSGEDECL bool SSGE_ObjectExists(uint32_t id);
+SSGEAPI bool SSGE_Object_Exists(uint32_t id);
 
 /**
- * Checks if an object exists
+ * Check if an object exists
  * \param name The name of the object
  * \return True if the object exists, false otherwise
  */
-SSGEDECL bool SSGE_ObjectExistsByName(char *name);
+SSGEAPI bool SSGE_Object_ExistsName(char *name);
 
 /**
- * Draws an object
- * \param object The object to draw
+ * Move an object
+ * \param object The object to move
+ * \param x The new x coordinate
+ * \param y The new y coordinate
  */
-SSGEDECL void SSGE_DrawObject(SSGE_Object *object);
+SSGEAPI void SSGE_Object_Move(SSGE_Object *object, int x, int y);
 
 /**
- * Changes the texture of an object
- * \param object The object to change the texture of
+ * Move an object relatively to its current position
+ * \param object The object to move
+ * \param dx The change in x coordinate
+ * \param dy The change in y coordinate
+ */
+SSGEAPI void SSGE_Object_MoveRel(SSGE_Object *object, int dx, int dy);
+
+/**
+ * Bind a texture to an object
+ * \param object The object to bind the texture to
  * \param texture The new texture of the object
  */
-SSGEDECL void SSGE_ChangeObjectTexture(SSGE_Object *object, SSGE_Texture *texture);
+SSGEAPI void SSGE_Object_BindTexture(SSGE_Object *object, SSGE_Texture *texture);
 
 /**
- * Gets an object by id
+ * Bind an animation to an object
+ * \param object The object to bind the animation to
+ * \param animation The new animation of the texture
+ */
+SSGEAPI void SSGE_Object_BindAnimation(SSGE_Object *object, SSGE_Animation *animation);
+
+/**
+ * Remove the texure of an object
+ * \param object The object to remove the texture of
+ */
+SSGEAPI void SSGE_Object_RemoveSprite(SSGE_Object *object);
+#define SSGE_Object_RemoveTexture SSGE_Object_RemoveSprite
+#define SSGE_Object_RemoveAnim SSGE_Object_RemoveSprite
+
+/**
+ * Get an object by id
  * \param id The id of the object
  * \return The object
  */
-SSGEDECL SSGE_Object *SSGE_GetObject(uint32_t id);
+SSGEAPI SSGE_Object *SSGE_Object_Get(uint32_t id);
 
 /**
- * Gets an object by name
+ * Get an object by name
  * \param name The name of the object
  * \return The object with the given name
  */
-SSGEDECL SSGE_Object *SSGE_GetObjectByName(char *name);
+SSGEAPI SSGE_Object *SSGE_Object_GetName(char *name);
 
 /**
- * Destroys an object by id
+ * Get the data of the object
+ * \param object The object to get the data of
+ */
+SSGEAPI void *SSGE_Object_GetData(SSGE_Object *object);
+
+/**
+ * Destroy an object by id
  * \param id The id of the object
  */
-SSGEDECL void SSGE_DestroyObject(uint32_t id);
+SSGEAPI void SSGE_Object_Destroy(uint32_t id);
 
 /**
- * Destroys all objects with a given name
+ * Destroy all objects with a given name
  * \param name The name of the object
  */
-SSGEDECL void SSGE_DestroyObjectByName(char *name);
+SSGEAPI void SSGE_Object_DestroyName(char *name);
 
 /**
- * Destroys all objects
+ * Destroy all objects
  */
-SSGEDECL void SSGE_DestroyAllObjects();
-
-// Hitbox functions
+SSGEAPI void SSGE_Object_DestroyAll();
 
 /**
- * Creates a hitbox
- * \param name The name of the hitbox
- * \param x The x position of the hitbox
- * \param y The y position of the hitbox
- * \param width The width of the hitbox
- * \param height The height of the hitbox
- * \return The hitbox id
- * \note The hitbox is an object with a hitbox property set to true, it does not have texture
- * \note The hitbox is stored internally as an object and can be accessed by its name or its id
- * \warning The hitbox must be destroyed at the exit of the program, as texture
- */
-SSGEDECL uint32_t SSGE_CreateHitbox(char *name, int x, int y, int width, int height);
-
-/**
- * Checks if a hitbox is colliding with another hitbox
+ * Check if a hitbox is colliding with another hitbox
  * \param hitbox1 The first hitbox
  * \param hitbox2 The second hitbox
  * \return True if the hitboxes are colliding, false otherwise
  */
-SSGEDECL bool SSGE_HitboxIsColliding(SSGE_Object *hitbox1, SSGE_Object *hitbox2);
+SSGEAPI bool SSGE_Object_IsColliding(SSGE_Object *hitbox1, SSGE_Object *hitbox2);
 
 #ifdef __cplusplus
 }

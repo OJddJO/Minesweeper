@@ -9,61 +9,70 @@ extern "C" {
 #endif
 
 /**
- * Loads an audio
+ * Load an audio
+ * \param id Where to store the id of the audio
  * \param filename The path to the audio
  * \param name The name of the audio
  * \return The audio
  */
-SSGEDECL uint32_t SSGE_LoadAudio(char *filename, char *name);
+SSGEAPI SSGE_Audio *SSGE_Audio_Create(uint32_t *id, char *filename, char *name);
 
 /**
- * Plays an audio by id
+ * Get an audio
  * \param id The id of the audio
- * \param channel The channel to play the audio on, -1 for first free channel. Channels must be a number between 0 and 3
+ * \return The audio
  */
-SSGEDECL void SSGE_PlayAudio(uint32_t id, int channel);
+SSGEAPI SSGE_Audio *SSGE_Audio_Get(uint32_t id);
 
 /**
- * Plays an audio by name
+ * Get an audio by name
  * \param name The name of the audio
- * \param channel The channel to play the audio on, -1 for first free channel. Channels must be a number between 0 and 3
+ * \return The audio
  */
-SSGEDECL void SSGE_PlayAudioByName(char *name, int channel);
+SSGEAPI SSGE_Audio *SSGE_Audio_GetName(char *name);
+
+/**
+ * Play an audio by id
+ * \param audio The audio to play
+ * \param channel The channel to play the audio on, -1 for first free channel.
+ * \return The channel used to play the audio
+ */
+SSGEAPI int SSGE_Audio_Play(SSGE_Audio *audio, int channel);
 
 /**
  * Resume an audio
  * \param channel The channel to resume the audio on, -1 for all
  */
-SSGEDECL void SSGE_ResumeAudio(int channel);
+SSGEAPI void SSGE_Audio_Resume(int channel);
 
 /**
- * Pauses an audio
+ * Pause an audio
  * \param channel The channel to pause the audio on, -1 for all
  */
-SSGEDECL void SSGE_PauseAudio(int channel);
+SSGEAPI void SSGE_Audio_Pause(int channel);
 
 /**
- * Stops an audio
+ * Stop an audio
  * \param channel The channel to stop the audio on, -1 for all
  */
-SSGEDECL void SSGE_StopAudio(int channel);
+SSGEAPI void SSGE_Audio_Stop(int channel);
 
 /**
- * Closes an audio by id
+ * Close an audio by id
  * \param id The id of the audio
  */
-SSGEDECL void SSGE_CloseAudio(uint32_t id);
+SSGEAPI void SSGE_Audio_Close(uint32_t id);
 
 /**
- * Closes an audio by name
+ * Close an audio by name
  * \param name The name of the audio
  */
-SSGEDECL void SSGE_CloseAudioByName(char *name);
+SSGEAPI void SSGE_Audio_CloseName(char *name);
 
 /**
- * Closes all audios
+ * Close all audios
  */
-SSGEDECL void SSGE_CloseAllAudios();
+SSGEAPI void SSGE_Audio_CloseAll();
 
 #ifdef __cplusplus
 }

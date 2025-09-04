@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdatomic.h>
 
 #include "SSGE/SSGE_config.h"
-#include "SSGE/SSGE_array.h"
 #include "SSGE/SSGE_events.h"
 
 #ifdef __cplusplus
@@ -16,179 +16,189 @@ extern "C" {
  * SDL Structures
  ************************************************/
 
-/**
- * Color structure (SDL_Color)
- * \param r `Uint8` The red component of the color
- * \param g `Uint8` The green component of the color
- * \param b `Uint8` The blue component of the color
- * \param a `Uint8` The alpha component of the color
- */
+// Color struct (SDL_Color)
 typedef struct _SSGE_Color {
-    uint8_t r; // red component of the color
-    uint8_t g; // green component of the color
-    uint8_t b; // blue component of the color
-    uint8_t a; // alpha component of the color
+    uint8_t r; // The red component of the color
+    uint8_t g; // The green component of the color
+    uint8_t b; // The blue component of the color
+    uint8_t a; // The alpha component of the color
 } SSGE_Color;
 
-/**
- * Point structure (SDL_Point)
- * \param x `int` The x coordinate of the point
- * \param y `int` The y coordinate of the point
- */
+// Point struct (SDL_Point)
 typedef struct _SSGE_Point {
-    int x; // x coordinate of the point
-    int y; // y coordinate of the point
+    int x; // The x coordinate of the point
+    int y; // The y coordinate of the point
 } SSGE_Point;
 
-/**
- * Flip enum (SDL_RendererFlip)
- * \param SSGE_FLIP_NONE No flip
- * \param SSGE_FLIP_HORIZONTAL Horizontal flip
- * \param SSGE_FLIP_VERTICAL Vertical flip
- * \param SSGE_FLIP_HOR_VER Horizontal and vertical flip
- */
+// Flip enum (SDL_RendererFlip)
 typedef enum {
-    SSGE_FLIP_NONE       = 0x00000000,   // no flip
-    SSGE_FLIP_HORIZONTAL = 0x00000001,   // flip horizontally
-    SSGE_FLIP_VERTICAL   = 0x00000002,   // flip vertically
-    SSGE_FLIP_HOR_VER    = 0x00000003    // flip horizontally and vertically
+    SSGE_FLIP_NONE       = 0x00000000, // No flip
+    SSGE_FLIP_HORIZONTAL = 0x00000001, // Flip horizontally
+    SSGE_FLIP_VERTICAL   = 0x00000002, // Flip vertically
+    SSGE_FLIP_HOR_VER    = 0x00000003  // Flip horizontally and vertically
 } SSGE_Flip;
 
-/************************************************
- * Prototypes
- ************************************************/
-
-// Game structure prototype to contain all datas
-typedef struct _Game Game;
+typedef enum {
+    SSGE_WINDOWMODE_WINDOWED = 0,
+    SSGE_WINDOWMODE_FULLSCREEN = 1,
+    SSGE_WINDOWMODE_FULLSCREEN_DESKTOP = 4097,
+} SSGE_WindowMode;
 
 /*************************************************
- * SSGE Structures
+ * SSGE Types
  *************************************************/
 
-/**
- * Engine structure
- * \param window The window
- * \param renderer The renderer
- * \param isRunning The running state of the engine
- * \param width The width of the window
- * \param height The height of the window
- * \param fps The frames per second
- */
+typedef void (*SSGE_UpdateFunc)(void *);
+typedef void (*SSGE_DrawFunc)(void *);
+typedef void (*SSGE_EventHandler)(SSGE_Event, void *);
+
+/*************************************************
+ * SSGE Structures / Enums
+ *************************************************/
+
+// Engine struct
 typedef struct _SSGE_Engine {
-    struct SDL_Window *window;
-    struct SDL_Renderer *renderer;
-    bool isRunning;
-    int width;
-    int height;
-    int fps;
+    struct SDL_Window   *window;        // The window
+    struct SDL_Renderer *renderer;      // The renderer
+    char                *title;         // The title of the window
+    struct SDL_Surface  *icon;          // The icon of the window
+    uint16_t            width;          // The width of the window
+    uint16_t            height;         // The height of the window
+    bool                resizable;      // If the window is resizable
+    SSGE_WindowMode     fullscreen;     // If the window is in fullscreen
+    uint16_t            fps;            // The frames per second
+    uint8_t             maxFrameskip;   // Max frameskip, default to 3
+    bool                vsync;          // If VSync is enabled
+    uint16_t            vsyncRate;      // VSync rate
+    bool                isRunning;      // The running state of the engine
+    bool                initialized;    // If the `SSGE_Engine` has been initialized
 } SSGE_Engine;
 
-/**
- * Texture structure
- * \param id The id of the texture
- * \param name The name of the texture
- * \param texture The SDL_Texture
- */
+// Array struct
+typedef struct _SSGE_Array {
+    void        **array;    // Array of pointers
+    uint32_t    size;       // Size of the array
+    uint32_t    count;      // Number of elements in the array
+    uint32_t    *indexes;   // Pointer to the pile of unused indexes
+    uint32_t    idxSize;    // The size of the pile of indexes
+    uint32_t    idxCount;   // Number of unused indexes
+} SSGE_Array;
+
+// Texture struct
 typedef struct _SSGE_Texture {
-    uint32_t id;
-    char *name;
-    struct SDL_Texture *texture;
+    char                *name;      // The name of the texture
+    uint32_t            id;         // The id of the texture
+    struct SDL_Texture  *texture;   // The SDL_Texture
+    int                 anchorX;    // Anchor x coordinate (relative to the texture)
+    int                 anchorY;    // Anchor y coordinate (relative to the texture)
+    SSGE_Array          queue;      // Queue of every render call for this texture
+    atomic_uintmax_t    refCount;   // Number of reference to this texture
+    atomic_bool         markedForDestroy; // Destruction flag
 } SSGE_Texture;
 
-/**
- * Object template structure
- * \param id The id of the template
- * \param name The name of the template
- * \param texture The texture for the template
- * \param width The width of the object
- * \param height The height of the object
- * \param hitbox If objects created from this template have a hitbox
- */
-typedef struct _SSGE_ObjectTemplate {
-    uint32_t id;
-    char *name;
-    SSGE_Texture *texture;
-    int width;
-    int height;
-    bool hitbox;
-    void (*destroyData)(void *);
-} SSGE_ObjectTemplate;
+typedef enum _SSGE_AnimationType {
+    SSGE_ANIM_FRAMES = 0,
+    SSGE_ANIM_FUNCTION
+} SSGE_AnimationType;
 
-/**
- * Object structure
- * \param id The id of the object
- * \param name The name of the object
- * \param texture The texture of the object
- * \param x The x position of the object
- * \param y The y position of the object
- * \param width The width of the object
- * \param height The height of the object
- * \param hitbox If the object has a hitbox
- * \param data The data of the object
- */
+typedef struct _SSGE_AnimationState SSGE_AnimationState;
+
+// Animation struct
+typedef struct _SSGE_Animation {
+    char                *name;  // The name of the animation
+    uint32_t            id;     // The id of the animation
+    SSGE_AnimationType  type;   // The animation type
+    union {
+        struct _SSGE_AnimationData {
+            struct SDL_Texture  **frames;       // An array of the animation frames
+            uint8_t             *frametimes;    // Frametime corresponding to each frames
+            uint32_t            frameCount;     // The number of animation frames
+            uint32_t            currentCount;   // The number of frames the animation currently have
+            uint16_t            width;          // The width of the frames
+            uint16_t            height;         // The height of the frames
+            int                 anchorX;        // Anchor x coordinate (relative to the frame)
+            int                 anchorY;        // Anchor y coordinate (relative to the frame)
+        } data;
+
+        /**
+         * The animation function if `type` is `SSGE_ANIM_FUNCTION`.
+         * Must take in an `SSGE_AnimationState` pointer
+         */
+        void (*draw)(SSGE_AnimationState *);
+    };
+} SSGE_Animation;
+
+// Animation state struct
+typedef struct _SSGE_AnimationState {
+    SSGE_Animation  *animation;     // The animation to track the animation state
+    int             x;              // The x coordinate at which the animation is played
+    int             y;              // The y coordinate at which the animation is played
+    uint32_t        loop;           // Number of loops (0 means play once, -1 means indefinitly)
+    uint32_t        currentFrame;   // The index of the current frame
+    uint8_t         currentFrameTime; // Elapsed time spent on the current frame (in frames)
+    bool            reversed;       // If the animation is reversed or not
+    bool            pingpong;       // If the animation should pingpong (normal -> reversed)
+    bool            isPlaying;      // If the animation is playing or not
+} SSGE_AnimationState;
+
+typedef enum _SSGE_SpriteType {
+    SSGE_SPRITE_NONE = -1U,
+    SSGE_SPRITE_STATIC = 0,
+    SSGE_SPRITE_ANIM
+} SSGE_SpriteType;
+
+// Object struct
 typedef struct _SSGE_Object {
-    uint32_t id;
-    char *name;
-    struct SDL_Texture *texture;
-    int x;
-    int y;
-    int width;
-    int height;
-    bool hitbox;
-    void *data;
-    void (*destroyData)(void *);
+    char            *name;      // The name of the object
+    uint32_t        id;         // The id of the object
+    int             x;          // The x coordinate of the object
+    int             y;          // The y coordinate of the object
+    uint16_t        width;      // The width of the object
+    uint16_t        height;     // The height of the object
+    bool            hitbox;     // If the object has a hitbox
+    SSGE_SpriteType spriteType; // If the sprite is animated or static
+    union {
+        struct {
+            SSGE_Texture        *texture;       // The texture of the object
+            uint32_t            renderDataIdx;  // The index of the render data in the texture render queue
+        } texture;
+        uint32_t            animation;  // The id of the animation state
+    };
+    void            *data;      // The data of the object
+    void            (*destroyData)(void *); // The function to be called to destroy the data
 } SSGE_Object;
 
-/**
- * Tilemap structure
- * \param texture The texture of the tilemap
- * \param tileWidth The width of the tiles
- * \param tileHeight The height of the tiles
- * \param spacing The spacing between the tiles
- * \param nbRows The number of rows in the tilemap
- * \param nbCols The number of columns in the tilemap
- */
+// Object template struct
+typedef struct _SSGE_ObjectTemplate {
+    char            *name;      // The name of the template
+    uint32_t        id;         // The id of the template
+    uint16_t        width;      // The width of the object
+    uint16_t        height;     // The height of the object
+    SSGE_SpriteType spriteType; // If the sprite is animatied or static
+    union {
+        SSGE_Texture    *texture;   // The texture for the template
+        SSGE_Animation  *animation; // The animation for the template
+    };
+    bool            hitbox;     // If objects created from this template have a hitbox
+    void            (*destroyData)(void *); // The function to be called to destroy the object data
+} SSGE_ObjectTemplate;
+
+// Tilemap struct
 typedef struct _SSGE_Tilemap {
-    struct SDL_Texture *texture;
-    int tileWidth;
-    int tileHeight;
-    int spacing;
-    int nbRows;
-    int nbCols;
+    struct SDL_Texture  *texture;   // The texture of the tilemap
+    uint16_t            tileWidth;  // The width of the tiles
+    uint16_t            tileHeight; // The height of the tiles
+    uint16_t            spacing;    // The spacing between the tiles
+    uint16_t            nbRows;     // The number of rows in the tilemap
+    uint16_t            nbCols;     // The number of columns in the tilemap
 } SSGE_Tilemap;
 
-/**
- * Tile structure
- * \param tilemap The tilemap of the tile
- * \param row The row of the tile
- * \param col The column of the tile
- */
+// Tile struct
 typedef struct _SSGE_Tile {
-    SSGE_Tilemap *tilemap;
-    int row;
-    int col;
+    SSGE_Tilemap    *tilemap;   // The tilemap of the tile
+    uint16_t        row;        // The row of the tile
+    uint16_t        col;        // The column of the tile
 } SSGE_Tile;
-
-/**
- * Font structure
- * \param name The name of the font
- * \param font The TTF_Font 
- */
-typedef struct _SSGE_Font {
-    char *name;
-    struct _TTF_Font *font;
-} SSGE_Font;
-
-/**
- * Audio structure
- * \param name The name of the audio
- * \param audio The Mix_Chunk
- */
-typedef struct _SSGE_Audio {
-    uint32_t id;
-    char *name;
-    struct Mix_Chunk *audio;
-} SSGE_Audio;
 
 typedef enum _SSGE_Anchor {
     SSGE_NW,
@@ -201,6 +211,19 @@ typedef enum _SSGE_Anchor {
     SSGE_S,
     SSGE_SE
 } SSGE_Anchor;
+
+// Font struct
+typedef struct _SSGE_Font {
+    char                *name; // The name of the font
+    struct _TTF_Font    *font; // The TTF_Font
+} SSGE_Font;
+
+// Audio struct
+typedef struct _SSGE_Audio {
+    char                *name;  // The name of the audio
+    uint32_t            id;     // The id of the audio
+    struct Mix_Chunk    *audio; // The Mix_Chunk
+} SSGE_Audio;
 
 #ifdef __cplusplus
 }
