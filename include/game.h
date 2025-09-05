@@ -149,5 +149,6 @@ void genChunk(Chunk chunk);
 void initGame(Game *game);
 
 void revealTile(Game *game, int32_t lrow, int32_t lcol);
+void flagTile(Game *game, int32_t lrow, int32_t lcol);
 
 #endif // __GAME_H__

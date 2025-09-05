@@ -51,7 +51,7 @@ void genChunk(Chunk chunk) {
 
 /**
  * Generates the numbers in the map
-    * \param map The map to generate the numbers in
+ * \param map The map to generate the numbers in
  */
 inline static void genNumbers(Map map) {
     for (int32_t lrow = 0; lrow < CHUNK_HEIGHT * MAP_HEIGHT; lrow++) {
@@ -146,6 +146,7 @@ void initGame(Game *game) {
 void revealTile(Game *game, int32_t lrow, int32_t lcol) {
     int8_t crow, ccol, row, col;
     linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
+    if (getTileState(game->map[crow][ccol][row][col])) return;
     storeTileState(&game->map[crow][ccol][row][col], S_REVEALED);
     SSGE_Object *obj = SSGE_Object_Get(game->ids[lrow][lcol]);
     uint8_t value = getTileValue(game->map[crow][ccol][row][col]);
@@ -165,5 +166,22 @@ void revealTile(Game *game, int32_t lrow, int32_t lcol) {
                 }
             }
         }
+    }
+}
+
+void flagTile(Game *game, int32_t lrow, int32_t lcol) {
+    int8_t crow, ccol, row, col;
+    linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
+    uint8_t state = getTileState(game->map[crow][ccol][row][col]);
+    SSGE_Object *obj = SSGE_Object_Get(game->ids[lrow][lcol]);
+    switch (state) {
+        case S_HIDDEN:
+            storeTileState(&game->map[crow][ccol][row][col], S_FLAGGED);
+            SSGE_Object_BindTexture(obj, SSGE_Texture_Get(T_FLAG));
+            break;
+        case S_FLAGGED:
+            storeTileState(&game->map[crow][ccol][row][col], S_HIDDEN);
+            SSGE_Object_BindTexture(obj, SSGE_Texture_Get(S_HIDDEN));
+            break;
     }
 }

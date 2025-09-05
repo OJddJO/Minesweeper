@@ -74,14 +74,16 @@ static void draw(Game *game) {
 static void eventHandler(SSGE_Event event, Game *game) {
     switch (event.type) {
         case SSGE_EVENT_MOUSEBUTTONDOWN:
+            int x, y;
+            SSGE_GetMousePosition(&x, &y);
+            int64_t lrow = (y + game->vy) / TILE_SIZE,
+                    lcol = (x + game->vx) / TILE_SIZE;
             switch (event.button.button) {
                 case SSGE_MOUSE_LEFT:
-                    int x, y;
-                    SSGE_GetMousePosition(&x, &y);
-                    int64_t lrow = (y + game->vy) / TILE_SIZE,
-                            lcol = (x + game->vx) / TILE_SIZE;
                     revealTile(game, lrow, lcol);
-                    SSGE_ManualUpdate();
+                    break;
+                case SSGE_MOUSE_RIGHT:
+                    flagTile(game, lrow, lcol);
                     break;
             }
             break;
