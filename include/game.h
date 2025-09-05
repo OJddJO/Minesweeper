@@ -9,7 +9,7 @@
 
 #include "SSGE/SSGE.h"
 
-#define FPS 60
+#define FPS 120
 
 #define CHUNK_WIDTH 10
 #define CHUNK_HEIGHT 10
@@ -21,8 +21,8 @@
 
 #define BORDER_SIZE 4.5
 
-#define WIN_W (int8_t)(CHUNK_WIDTH + BORDER_SIZE*2) * TILE_SIZE
-#define WIN_H (int8_t)(CHUNK_HEIGHT + BORDER_SIZE*2) * TILE_SIZE
+#define WIN_W (int32_t)(CHUNK_WIDTH + BORDER_SIZE*2) * TILE_SIZE
+#define WIN_H (int32_t)(CHUNK_HEIGHT + BORDER_SIZE*2) * TILE_SIZE
 
 #define NUMBER_TILE_OFFSET 5
 
@@ -49,6 +49,13 @@ typedef Chunk Map[MAP_HEIGHT][MAP_WIDTH];
 typedef struct _Game {
     uint32_t    ids[CHUNK_HEIGHT * MAP_HEIGHT][CHUNK_WIDTH * MAP_WIDTH];
     Map         map;
+    uint64_t    score;
+    int64_t     vx, vy; // Viewport xy in pixels
+
+    clock_t     start;
+    uint64_t    frame;
+    uint64_t    update;
+    bool        debug;
 } Game;
 
 /**
@@ -60,7 +67,7 @@ typedef struct _Game {
  * \param lrow The buffer to store the linear row
  * \param lcol The buffer to store the linear col
  */
-inline void chunkToLinear(int8_t crow, int8_t ccol, int8_t row, int8_t col, int64_t *lrow, int64_t *lcol) {
+inline void chunkToLinear(int8_t crow, int8_t ccol, int8_t row, int8_t col, int32_t *lrow, int32_t *lcol) {
     *lrow = crow * CHUNK_HEIGHT + row;
     *lcol = ccol * CHUNK_WIDTH + col;
 }
@@ -74,7 +81,7 @@ inline void chunkToLinear(int8_t crow, int8_t ccol, int8_t row, int8_t col, int6
  * \param row The buffer to store the row of the tile in the chunk
  * \param col The buffer to store the col of the tile in the chunk
  */
-inline void linearToChunk(int64_t lrow, int64_t lcol, int8_t *crow, int8_t *ccol, int8_t *row, int8_t *col) {
+inline void linearToChunk(int32_t lrow, int32_t lcol, int8_t *crow, int8_t *ccol, int8_t *row, int8_t *col) {
     *crow = lrow / CHUNK_HEIGHT;
     *ccol = lcol / CHUNK_WIDTH;
     *row = lrow % CHUNK_HEIGHT;
@@ -82,7 +89,7 @@ inline void linearToChunk(int64_t lrow, int64_t lcol, int8_t *crow, int8_t *ccol
 }
 
 inline bool outOfMap(int8_t crow, int8_t ccol, int8_t row, int8_t col) {
-    int64_t lrow = 0, lcol = 0;
+    int32_t lrow = 0, lcol = 0;
     chunkToLinear(crow, ccol, row, col, &lrow, &lcol);
     return (
         lrow < 0 || lrow >= MAP_HEIGHT * CHUNK_HEIGHT ||
@@ -140,5 +147,7 @@ void printMap(Map map);
 
 void genChunk(Chunk chunk);
 void initGame(Game *game);
+
+void revealTile(Game *game, int32_t lrow, int32_t lcol);
 
 #endif // __GAME_H__

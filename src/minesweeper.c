@@ -1,33 +1,9 @@
 #include "game.h"
 
-static void initAssets();
-
-/**
- * Main function
- */
-int main() {
-    SSGE_Init("Minesweeper", WIN_W, WIN_H, FPS);
-    SSGE_SetBackgroundColor((SSGE_Color){191, 191, 191, 255});
-    SSGE_SetWindowIcon("assets/icon.png");
-
-    initAssets();
-    SSGE_Font_Create("assets/font.ttf", 20, "font");
-
-    Game game = {0};
-    initGame(&game);
-
-    SSGE_Run(NULL, NULL, NULL, NULL);
-
-    SSGE_Quit();
-
-    return 0;
-}
-
-
 /**
  * Initializes the assets
  */
-static void initAssets() {
+inline static void initAssets() {
     SSGE_Tilemap *tilemap = SSGE_Tilemap_Create("assets/tiles.png", 6, 6, 0, 4, 4);
 
     uint32_t id;
@@ -50,4 +26,70 @@ static void initAssets() {
     SSGE_Tilemap_GetTileAsTexture(tilemap, 1, 3, &id, "8");
 
     SSGE_Tilemap_Destroy(tilemap);
+}
+
+static void update(Game *game);
+static void draw(Game *game);
+static void eventHandler(SSGE_Event event, Game *game);
+
+/**
+ * Main function
+ */
+int main() {
+    SSGE_Init("Minesweeper", WIN_W, WIN_H, FPS);
+    SSGE_SetBackgroundColor((SSGE_Color){191, 191, 191, 255});
+    SSGE_SetWindowIcon("assets/icon.png");
+    SSGE_SetVSync(true);
+
+    initAssets();
+    SSGE_Font_Create("assets/font.ttf", 20, "font");
+
+    Game game = {0};
+    initGame(&game);
+
+    game.start = clock();
+
+    SSGE_Run((SSGE_UpdateFunc)update, (SSGE_DrawFunc)draw, (SSGE_EventHandler)eventHandler, &game);
+
+    SSGE_Quit();
+
+    return 0;
+}
+
+static void update(Game *game) {
+    ++game->update;
+}
+
+static void draw(Game *game) {
+    if (game->debug) {
+        double fps = (double)++game->frame / (double)(clock() - game->start) * CLOCKS_PER_SEC;
+        double ups = game->update / (double)(clock() - game->start) * CLOCKS_PER_SEC;
+        char fptchar[100];
+        sprintf(fptchar, "FPS: %.2f | UPS: %.2f", fps, ups);
+        SSGE_Text_Draw("font", fptchar, 2, 2, (SSGE_Color){0, 0, 0, 255}, SSGE_NW);
+        SSGE_Text_Draw("font", fptchar, 0, 0, (SSGE_Color){255, 255, 255, 255}, SSGE_NW);
+    } else ++game->frame;
+}
+
+static void eventHandler(SSGE_Event event, Game *game) {
+    switch (event.type) {
+        case SSGE_EVENT_MOUSEBUTTONDOWN:
+            switch (event.button.button) {
+                case SSGE_MOUSE_LEFT:
+                    int x, y;
+                    SSGE_GetMousePosition(&x, &y);
+                    int64_t lrow = (y + game->vy) / TILE_SIZE,
+                            lcol = (x + game->vx) / TILE_SIZE;
+                    revealTile(game, lrow, lcol);
+                    SSGE_ManualUpdate();
+                    break;
+            }
+            break;
+        case SSGE_EVENT_KEYDOWN:
+            switch (event.key.keysym.scancode) {
+                case SSGE_SCANCODE_F5:
+                    game->debug = !game->debug;
+                    break;
+            }
+    }
 }

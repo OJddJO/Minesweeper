@@ -10,8 +10,8 @@ void printChunk(Chunk chunk) {
 }
 
 void printMap(Map map) {
-    for (int64_t lrow = 0; lrow < MAP_HEIGHT * CHUNK_HEIGHT; lrow++) {
-        for (int64_t lcol = 0; lcol < MAP_WIDTH * CHUNK_WIDTH; lcol++) {
+    for (int32_t lrow = 0; lrow < MAP_HEIGHT * CHUNK_HEIGHT; lrow++) {
+        for (int32_t lcol = 0; lcol < MAP_WIDTH * CHUNK_WIDTH; lcol++) {
             int8_t crow, ccol, row, col;
             linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
             printf("%u ", map[crow][ccol][row][col]);
@@ -54,8 +54,8 @@ void genChunk(Chunk chunk) {
     * \param map The map to generate the numbers in
  */
 inline static void genNumbers(Map map) {
-    for (int64_t lrow = 0; lrow < CHUNK_HEIGHT * MAP_HEIGHT; lrow++) {
-        for (int64_t lcol = 0; lcol < CHUNK_WIDTH * MAP_WIDTH; lcol++) {
+    for (int32_t lrow = 0; lrow < CHUNK_HEIGHT * MAP_HEIGHT; lrow++) {
+        for (int32_t lcol = 0; lcol < CHUNK_WIDTH * MAP_WIDTH; lcol++) {
             int8_t crow, ccol, row, col;
             linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
             
@@ -92,10 +92,10 @@ void createTiles(Game *game) {
     for (int8_t row = 0; row < CHUNK_HEIGHT; row++)
     for (int8_t col = 0; col < CHUNK_WIDTH; col++)
     {
-        int64_t lrow, lcol;
+        int32_t lrow, lcol;
         chunkToLinear(crow, ccol, row, col, &lrow, &lcol);
-        int x = lcol * TILE_SIZE - CHUNK_WIDTH * MAP_WIDTH * TILE_SIZE / 4,
-            y = lrow * TILE_SIZE - CHUNK_HEIGHT * MAP_HEIGHT * TILE_SIZE / 4;
+        int x = lcol * TILE_SIZE - game->vx,
+            y = lrow * TILE_SIZE - game->vy;
         SSGE_Object *obj = SSGE_Object_Create(&game->ids[lrow][lcol], NULL, x, y, TILE_SIZE, TILE_SIZE, false, NULL, NULL);
         
         uint8_t value, state;
@@ -121,6 +121,49 @@ void createTiles(Game *game) {
 }
 
 void initGame(Game *game) {
-    genMap(game->map);
+    for (int8_t row = 0; row < MAP_HEIGHT; row++) {
+        for (int8_t col = 0; col < MAP_WIDTH; col++) {
+            genChunk(game->map[col][row]);
+        }
+    }
+    genNumbers(game->map);
+
+    int32_t lrow = MAP_HEIGHT * CHUNK_HEIGHT / 2,
+            lcol = MAP_WIDTH * CHUNK_WIDTH / 2;
+    int8_t  crow, ccol, row, col;
+    linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
+    while (getTileValue(game->map[crow][ccol][row][col]) != 0) {
+        genChunk(game->map[crow][ccol]);
+        genNumbers(game->map);
+    }
+    game->vx = (CHUNK_HEIGHT - BORDER_SIZE) * TILE_SIZE;
+    game->vy = (CHUNK_WIDTH - BORDER_SIZE) * TILE_SIZE;
+
     createTiles(game);
+    revealTile(game, lrow, lcol);
+}
+
+void revealTile(Game *game, int32_t lrow, int32_t lcol) {
+    int8_t crow, ccol, row, col;
+    linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
+    storeTileState(&game->map[crow][ccol][row][col], S_REVEALED);
+    SSGE_Object *obj = SSGE_Object_Get(game->ids[lrow][lcol]);
+    uint8_t value = getTileValue(game->map[crow][ccol][row][col]);
+    if (value == 9) {
+        // end game
+    } else {
+        ++game->score;
+        SSGE_Object_BindTexture(obj, SSGE_Texture_Get(value + NUMBER_TILE_OFFSET));
+        if (value == 0) {
+            int8_t crow_, ccol_, row_, col_;
+            for (int8_t i = -1; i < 2; i++) {
+                for (int8_t j = -1; j < 2; j++) {
+                    if (outOfMap(crow, ccol, row + i, col + j)) continue;
+                    linearToChunk(lrow + i, lcol + j, &crow_, &ccol_, &row_, &col_);
+                    uint8_t state = getTileState(game->map[crow_][ccol_][row_][col_]);
+                    if (state == S_HIDDEN) revealTile(game, lrow + i, lcol + j);
+                }
+            }
+        }
+    }
 }
