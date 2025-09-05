@@ -66,9 +66,15 @@ static void draw(Game *game) {
         double ups = game->update / (double)(clock() - game->start) * CLOCKS_PER_SEC;
         char fptchar[100];
         sprintf(fptchar, "FPS: %.2f | UPS: %.2f", fps, ups);
-        SSGE_Text_Draw("font", fptchar, 2, 2, (SSGE_Color){0, 0, 0, 255}, SSGE_NW);
-        SSGE_Text_Draw("font", fptchar, 0, 0, (SSGE_Color){255, 255, 255, 255}, SSGE_NW);
-    } else ++game->frame;
+        SSGE_Text_Draw("font", fptchar, 4, 4, (SSGE_Color){0, 0, 0, 255}, SSGE_NW);
+        SSGE_Text_Draw("font", fptchar, 2, 2, (SSGE_Color){255, 255, 255, 255}, SSGE_NW);
+    } else {
+        ++game->frame;
+        char score[50];
+        sprintf(score, "Score: %llu", game->score);
+        SSGE_Text_Draw("font", score, 4, 4, (SSGE_Color){0, 0, 0, 255}, SSGE_NW);
+        SSGE_Text_Draw("font", score, 2, 2, (SSGE_Color){255, 255, 255, 255}, SSGE_NW);
+    }
 }
 
 static void eventHandler(SSGE_Event event, Game *game) {
