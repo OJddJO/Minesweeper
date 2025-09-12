@@ -9,15 +9,15 @@
 
 #include "SSGE/SSGE.h"
 
-#define FPS 120
+#define FPS 60
 
-#define CHUNK_WIDTH 10
-#define CHUNK_HEIGHT 10
+#define CHUNK_WIDTH 15
+#define CHUNK_HEIGHT 15
 
 #define MAP_WIDTH 3
 #define MAP_HEIGHT 3
 
-#define TILE_SIZE 30
+#define TILE_SIZE 40
 
 #define BORDER_SIZE 4.5
 
