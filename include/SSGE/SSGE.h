@@ -131,36 +131,12 @@ SSGEAPI void SSGE_SetColor(SSGE_Color color);
  */
 SSGEAPI void SSGE_SetBackgroundColor(SSGE_Color color);
 
-// Event functions
-
 /**
  * Get the mouse position
  * \param x The variable to store the x coordinate of the mouse
  * \param y The variable to store the y coordinate of the mouse
  */
 SSGEAPI void SSGE_GetMousePosition(int *x, int *y);
-
-/**
- * Check if an object is hovered
- * \param object The object to check
- * \return True if the object is hovered, false otherwise
- */
-SSGEAPI bool SSGE_ObjectIsHovered(SSGE_Object *object);
-
-/**
- * Get the hovered object
- * \return The hovered object, NULL if no object is hovered
- * \warning If multiple objects are hovered, returns the hovered object with the smallest id
- */
-SSGEAPI SSGE_Object *SSGE_GetHoveredObject();
-
-/**
- * Get the list of the objects that are hovered
- * \param objects The array to store the hovered objects
- * \param size The size of the array
- * \return The number of objects retrieved
- */
-SSGEAPI uint32_t SSGE_GetHoveredObjects(SSGE_Object *objects[], uint32_t size);
 
 #ifdef __cplusplus
 }

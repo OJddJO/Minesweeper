@@ -15,11 +15,10 @@ extern "C" {
  * \param width The width of the object template
  * \param height The height of the object template
  * \param hitbox True if objects created from this template have a hitbox, false otherwise
- * \param destroyData The function to destroy the data of the object
  * \return The object template
  * \note The object template is stored internally and can be accessed by its name or its id
  */
-SSGEAPI SSGE_ObjectTemplate *SSGE_Template_Create(uint32_t *id, char *name, uint16_t width, uint16_t height, bool hitbox, void (*destroyData)(void *));
+SSGEAPI SSGE_ObjectTemplate *SSGE_Template_Create(uint32_t *id, char *name, uint16_t width, uint16_t height, bool hitbox);
 
 /**
  * Create an object template with a texture
@@ -29,11 +28,10 @@ SSGEAPI SSGE_ObjectTemplate *SSGE_Template_Create(uint32_t *id, char *name, uint
  * \param width The width of the object template
  * \param height The height of the object template
  * \param hitbox True if objects created from this template have a hitbox, false otherwise
- * \param destroyData The function to destroy the data of the object
  * \return The object template
  * \note The object template is stored internally and can be accessed by its name or its id
  */
-SSGEAPI SSGE_ObjectTemplate *SSGE_Template_CreateStatic(uint32_t *id, char *name, SSGE_Texture *texture, uint16_t width, uint16_t height, bool hitbox, void (*destroyData)(void *));
+SSGEAPI SSGE_ObjectTemplate *SSGE_Template_CreateStatic(uint32_t *id, char *name, SSGE_Texture *texture, uint16_t width, uint16_t height, bool hitbox);
 
 /**
  * Create an object template with an animation
@@ -43,11 +41,10 @@ SSGEAPI SSGE_ObjectTemplate *SSGE_Template_CreateStatic(uint32_t *id, char *name
  * \param width The width of the object template
  * \param height The height of the object template
  * \param hitbox True if objects created from this template have a hitbox, false otherwise
- * \param destroyData The function to destroy the data of the object
  * \return The object template
  * \note The object template is stored internally and can be accessed by its name or its id
  */
-SSGEAPI SSGE_ObjectTemplate *SSGE_Template_CreateAnim(uint32_t *id, char *name, SSGE_Animation *animation, uint16_t width, uint16_t height, bool hitbox, void (*destroyData)(void *));
+SSGEAPI SSGE_ObjectTemplate *SSGE_Template_CreateAnim(uint32_t *id, char *name, SSGE_Animation *animation, uint16_t width, uint16_t height, bool hitbox);
 
 /**
  * Get an object template by id

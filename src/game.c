@@ -1,25 +1,5 @@
 #include "game.h"
 
-void printChunk(Chunk chunk) {
-    for (int8_t row = 0; row < CHUNK_HEIGHT; row++) {
-        for (int8_t col = 0; col < CHUNK_WIDTH; col++) {
-            printf("%u ", chunk[row][col]);
-        }
-        puts("");
-    }
-}
-
-void printMap(Map map) {
-    for (int32_t lrow = 0; lrow < MAP_HEIGHT * CHUNK_HEIGHT; lrow++) {
-        for (int32_t lcol = 0; lcol < MAP_WIDTH * CHUNK_WIDTH; lcol++) {
-            int8_t crow, ccol, row, col;
-            linearToChunk(lrow, lcol, &crow, &ccol, &row, &col);
-            printf("%u ", map[crow][ccol][row][col]);
-        }
-        puts("");
-    }
-}
-
 /**
  * Generates the mines in a chunk
  * \param chunk The chunk to generate the mines in
@@ -96,7 +76,7 @@ void createTiles(Game *game) {
         chunkToLinear(crow, ccol, row, col, &lrow, &lcol);
         int x = lcol * TILE_SIZE - game->vx,
             y = lrow * TILE_SIZE - game->vy;
-        SSGE_Object *obj = SSGE_Object_Create(&game->ids[lrow][lcol], NULL, x, y, TILE_SIZE, TILE_SIZE, false, NULL, NULL);
+        SSGE_Object *obj = SSGE_Object_Create(&game->ids[lrow][lcol], NULL, x, y, TILE_SIZE, TILE_SIZE, false);
         
         uint8_t value, state;
         getTileInfo(game->map[crow][ccol][row][col], &value, &state);

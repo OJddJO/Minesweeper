@@ -142,9 +142,6 @@ inline void storeTileState(uint8_t *tile, uint8_t state) {
     *tile = (uint8_t)((*tile & 0b00001111) | (state << 6));
 }
 
-void printChunk(Chunk chunk);
-void printMap(Map map);
-
 void genChunk(Chunk chunk);
 void initGame(Game *game);
 
